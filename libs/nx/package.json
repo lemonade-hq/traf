@@ -1,0 +1,27 @@
+{
+  "name": "@traf/nx",
+  "version": "0.0.5",
+  "type": "commonjs",
+  "license": "MIT",
+  "description": "A cli tool that wraps `@traf/core` to be used with Nx.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lemonade-hq/traf.git",
+    "directory": "libs/nx"
+  },
+  "keywords": [
+    "monorepo",
+    "monorepos",
+    "nx",
+    "nx-workspace",
+    "true-affected",
+    "affected"
+  ],
+  "homepage": "https://github.com/lemonade-hq/traf#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "traf-nx": "bin/traf-nx.js"
+  }
+}

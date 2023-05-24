@@ -1,0 +1,300 @@
+name: '🔗 PR'
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_NPM_TOKEN: ${{ secrets.LMND_GITHUB_TOKEN }}
+  NODE_AUTH_TOKEN: ${{ secrets.LMND_GITHUB_TOKEN }}
+
+jobs:
+  setup:
+    name: '🔨 Setup'
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.affectedProjects.outputs.affectedProjects }}
+      numOfAffected: ${{ steps.numOfAffected.outputs.numOfAffected }}
+      commitHash: ${{ steps.commitHash.outputs.commitHash }}
+    steps:
+      - name: '🔨 Init node'
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org/
+          scope: '@traf'
+          node-version: 18
+      - name: '🔨 Checkout code'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
+      - name: '🔨 Cache node modules'
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: '🔨 Install dependencies'
+        shell: bash
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: '📃 Get Affected Projects'
+        id: affectedProjects
+        run: |
+          affectedProjects=$(npx nx run nx:print-affected --base=origin/main --json=true | sed -n -e '/^\[/p')
+          echo $affectedProjects
+          echo "affectedProjects=$affectedProjects" >> $GITHUB_OUTPUT
+
+      - name: '🔢 Get Number of Affected Projects'
+        id: numOfAffected
+        run: |
+          numOfAffected="$(echo '${{ steps.affectedProjects.outputs.affectedProjects }}' | jq length)"
+          echo $numOfAffected
+          echo "numOfAffected=$numOfAffected" >> $GITHUB_OUTPUT
+
+      - name: '#️⃣ Get commit hash'
+        id: commitHash
+        run: |
+          commitHash=$(git rev-parse --short HEAD)
+          echo $commitHash
+          echo "commitHash=$commitHash" >> $GITHUB_OUTPUT
+
+  verify:
+    name: '🔍 Verify static ${{ matrix.project }}'
+    if: |
+      needs.setup.outputs.numOfAffected != 0 &&
+      (!contains(github.event.head_commit.message, 'skip ci') || github.event.pull_request.merged == 'true')
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.setup.outputs.projects) }}
+    steps:
+      - name: '🔨 Init node'
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org/
+          scope: '@traf'
+          node-version: 18
+      - name: '🔨 Checkout code'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
+      - name: '🔨 Cache node modules'
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: '🔨 Install dependencies'
+        shell: bash
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: '🔍 tsc ${{ matrix.project }}'
+        run: npx nx tsc ${{ matrix.project }}
+
+      - name: '🔍 lint ${{ matrix.project }}'
+        run: npx nx lint ${{ matrix.project }}
+
+      - name: '🔍 spell ${{ matrix.project }}'
+        run: npx nx spell ${{ matrix.project }}
+
+  verify-success:
+    name: 'Verify Success'
+    needs:
+      - setup
+      - verify
+    if: always() && needs.setup.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: '❓ Run if no affected packages'
+        if: needs.setup.outputs.numOfAffected == 0
+        run: |
+          echo "✅ No projects to verify"
+          exit 0
+
+      - name: '❓ Run if affected packages'
+        if: needs.setup.outputs.numOfAffected != 0
+        run: |
+          if [ "${{ needs.verify.result }}" != "success" ]
+          then
+            echo "❌ Look at the verify jobs and see which library failed"
+            exit 1
+          else
+            echo "✅ All verify jobs passed"
+            exit 0
+          fi
+
+  test:
+    name: '🧪 Test ${{ matrix.project }}'
+    if: |
+      needs.setup.outputs.numOfAffected != 0 &&
+      (!contains(github.event.head_commit.message, 'skip ci') || github.event.pull_request.merged == 'true')
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.setup.outputs.projects) }}
+    steps:
+      - name: '🔨 Init node'
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org/
+          scope: '@traf'
+          node-version: 18
+      - name: '🔨 Checkout code'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
+      - name: '🔨 Cache node modules'
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: '🔨 Install dependencies'
+        shell: bash
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: "🧪 Run ${{ matrix.project }}'s Tests"
+        run: npx nx test ${{ matrix.project }} --coverage --coverageReporters='lcov'
+
+  test-success:
+    name: 'Test Success'
+    needs:
+      - setup
+      - test
+    if: always() && needs.setup.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: '❓ Run if no affected packages'
+        if: needs.setup.outputs.numOfAffected == 0
+        run: |
+          echo "✅ No projects to test"
+          exit 0
+
+      - name: '❓ Run if affected packages'
+        if: needs.setup.outputs.numOfAffected != 0
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]
+          then
+            echo "❌ Look at the test jobs and see which library failed"
+            exit 1
+          else
+            echo "✅ All test jobs passed"
+            exit 0
+          fi
+
+  build:
+    name: '📤 Build'
+    if: |
+      needs.setup.outputs.numOfAffected != 0 &&
+      (!contains(github.event.head_commit.message, 'skip ci') || github.event.pull_request.merged == 'true')
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.setup.outputs.projects) }}
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: '🔨 Init node'
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org/
+          scope: '@traf'
+          node-version: 18
+      - name: '🔨 Checkout code'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
+      - name: '🔨 Cache node modules'
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: '🔨 Install dependencies'
+        shell: bash
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: '🏗️ Build ${{ matrix.project }}'
+        run: npx nx build ${{ matrix.project }} -- --optimization
+        env:
+          STAGE: 'staging'
+
+  build-success:
+    name: 'Build Success'
+    needs:
+      - setup
+      - build
+    if: always() && needs.setup.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: '❓ Run if no affected packages'
+        if: needs.setup.outputs.numOfAffected == 0
+        run: |
+          echo "✅ No projects to verify"
+          exit 0
+
+      - name: '❓ Run if affected packages'
+        if: needs.setup.outputs.numOfAffected != 0
+        run: |
+          if [ "${{ needs.build.result }}" != "success" ]
+          then
+            echo "❌ Look at the build jobs and see which library failed"
+            exit 1
+          else
+            echo "✅ All build and publish jobs passed"
+            exit 0
+          fi

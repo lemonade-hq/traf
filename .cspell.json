@@ -1,0 +1,14 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "words": [
+        "iife",
+        "traf"
+    ],
+    "ignorePaths": [
+        "**/node_modules/**",
+        "**/__fixtures__/**",
+        ".github",
+        "package*.json"
+    ]
+}

@@ -1,0 +1,52 @@
+name: '🏗️ PR Merged'
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, 'skip ci') || github.event.pull_request.merged == 'true'"
+    concurrency: version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: '🔨 Init node'
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org/
+          scope: '@traf'
+          node-version: 18
+      - name: '🔨 Checkout code'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
+      - name: '🔨 Cache node modules'
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: '🔨 Install dependencies'
+        shell: bash
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - run: npm run affected build
+      - run: |
+          git config --local user.email "ci@lemonade.com"
+          git config --local user.name "GitHub Actions CI"
+        shell: bash
+
+      - name: Master release
+        run: npx nx run workspace:version -- --push --baseBranch master
+        shell: bash

@@ -1,0 +1,47 @@
+{
+  "name": "traf",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "affected": "npx nx run nx:print-affected",
+    "build": "rm -rf dist && nx run-many --target=build --all=true --parallel=6",
+    "test": "nx run-many --target=test --parallel=3 --all=true --codeCoverage=true",
+    "lint": "nx run-many --target=lint --parallel=3 --all=true",
+    "tsc": "nx run-many --target=tsc --parallel=3 --all=true",
+    "spell": "nx run-many --target=spell --parallel=true --all=true",
+    "version": "nx run-many --target=version --parallel=true --all=true"
+  },
+  "private": true,
+  "devDependencies": {
+    "@jscutlery/semver": "^3.0.0",
+    "@nx/esbuild": "^16.2.2",
+    "@nx/eslint-plugin": "16.2.2",
+    "@nx/jest": "16.2.2",
+    "@nx/js": "16.2.2",
+    "@nx/linter": "16.2.2",
+    "@nx/workspace": "16.2.2",
+    "@types/jest": "^29.4.0",
+    "@types/node": "18.7.1",
+    "@typescript-eslint/eslint-plugin": "^5.58.0",
+    "@typescript-eslint/parser": "^5.58.0",
+    "@webpro/nx-tsc": "^0.0.1",
+    "cspell": "^6.31.1",
+    "esbuild": "^0.17.17",
+    "eslint": "~8.15.0",
+    "eslint-config-prettier": "8.1.0",
+    "jest": "^29.4.1",
+    "jest-environment-jsdom": "^29.4.1",
+    "nx": "16.2.2",
+    "nx-cloud": "latest",
+    "prettier": "^2.6.2",
+    "ts-jest": "^29.1.0",
+    "typescript": "~5.0.2"
+  },
+  "dependencies": {
+    "chalk": "^5.2.0",
+    "globby": "^13.1.4",
+    "ts-morph": "^18.0.0",
+    "tslib": "^2.3.0",
+    "yargs": "^17.7.2"
+  }
+}

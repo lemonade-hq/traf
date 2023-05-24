@@ -1,0 +1,73 @@
+import { resolve } from 'path';
+import { readFile } from 'fs/promises';
+import { globby } from 'globby';
+
+interface NxProject {
+  name: string;
+  sourceRoot: string;
+  implicitDependencies?: string[];
+  targets?: {
+    build?: {
+      options: {
+        tsConfig: string;
+      };
+    };
+  };
+}
+
+interface WorkspaceJsonConfiguration {
+  projects: Record<string, NxProject>;
+}
+
+interface WorkspaceProject {
+  name: string;
+  project: NxProject;
+}
+
+export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
+  try {
+    const workspace = JSON.parse(
+      await readFile(resolve(cwd, 'workspace.json'), 'utf-8')
+    ) as WorkspaceJsonConfiguration;
+
+    return Object.entries(workspace.projects).map(([name, project]) => ({
+      name,
+      project,
+    }));
+  } catch {
+    try {
+      const staticIgnores = ['node_modules', '**/node_modules', 'dist', '.git'];
+
+      const projectGlobPatterns: string[] = [`project.json`, `**/project.json`];
+
+      const combinedProjectGlobPattern =
+        '{' + projectGlobPatterns.join(',') + '}';
+
+      const files = await globby(combinedProjectGlobPattern, {
+        ignore: staticIgnores,
+        absolute: true,
+        cwd,
+        dot: true,
+        suppressErrors: true,
+        gitignore: true,
+      });
+
+      const projectFiles = [];
+
+      for (const file of files) {
+        const project = JSON.parse(
+          await readFile(resolve(cwd, file), 'utf-8')
+        ) as NxProject;
+        projectFiles.push({
+          name: project.name,
+          project,
+        });
+      }
+
+      return projectFiles;
+    } catch (e) {
+      console.log(e);
+      return [];
+    }
+  }
+}

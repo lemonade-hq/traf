@@ -1,0 +1,51 @@
+name: '📦 NPM package'
+on:
+  release:
+    types: [created]
+
+env:
+  GITHUB_NPM_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+  NPM_PUBLISH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    concurrency: release
+    steps:
+      - name: '🔨 Init node'
+        uses: actions/setup-node@v3
+        with:
+          registry-url: https://registry.npmjs.org/
+          scope: '@traf'
+          node-version: 18
+      - name: '🔨 Checkout code'
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
+      - name: '🔨 Cache node modules'
+        id: cache-nodemodules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: '🔨 Install dependencies'
+        shell: bash
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - run: npx nx run-many --all --target=build --parallel
+
+      - name: 'Publish all'
+        run: ls -d ./dist/libs/* | xargs -I {} bash -c "cd '{}' && npm publish --access public"
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
