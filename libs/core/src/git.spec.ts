@@ -1,4 +1,4 @@
-import { getChangedFiles, getMergeBase } from './git';
+import { getChangedFiles, getMergeBase, getDiff } from './git';
 import { resolve } from 'path';
 import { readFile, writeFile } from 'fs/promises';
 import * as childProcess from 'node:child_process';
@@ -77,6 +77,38 @@ describe('git', () => {
       });
 
       expect(mergeBase).toEqual(branch);
+
+      spy.mockRestore();
+    });
+  });
+
+  describe('getDiff', () => {
+    it('should return diff', () => {
+      const diff = getDiff({
+        base: branch,
+        cwd,
+      });
+
+      expect(diff).toEqual(expect.any(String));
+    });
+
+    it('should throw error if provided base does not exist', () => {
+      const spy = jest
+        .spyOn(childProcess, 'execSync')
+        .mockImplementation(() => {
+          throw new Error();
+        });
+
+      const nonExistingBranch = 'branch-that-does-not-exist';
+
+      expect(() =>
+        getDiff({
+          base: nonExistingBranch,
+          cwd,
+        })
+      ).toThrow(
+        `Unable to get diff for base: "${nonExistingBranch}". are you using the correct base?`
+      );
 
       spy.mockRestore();
     });

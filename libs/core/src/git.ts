@@ -40,13 +40,19 @@ export function getMergeBase({
 }
 
 export function getDiff({ base, cwd }: BaseGitActionArgs): string {
-  return execSync(`git diff ${base} --unified=0`, {
-    maxBuffer: TEN_MEGABYTES,
-    cwd,
-    stdio: 'pipe',
-  })
-    .toString()
-    .trim();
+  try {
+    return execSync(`git diff ${base} --unified=0`, {
+      maxBuffer: TEN_MEGABYTES,
+      cwd,
+      stdio: 'pipe',
+    })
+      .toString()
+      .trim();
+  } catch (e) {
+    throw new Error(
+      `Unable to get diff for base: "${base}". are you using the correct base?`
+    );
+  }
 }
 
 interface GetChangedFiles {
