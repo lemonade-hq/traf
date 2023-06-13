@@ -1,10 +1,13 @@
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { globby } from 'globby';
+import { TrueAffectedProject } from '@traf/core';
+import { existsSync } from 'fs';
 
 interface NxProject {
   name: string;
   sourceRoot: string;
+  projectType: 'application' | 'library';
   implicitDependencies?: string[];
   targets?: {
     build?: {
@@ -45,6 +48,7 @@ export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
 
       const files = await globby(combinedProjectGlobPattern, {
         ignore: staticIgnores,
+        ignoreFiles: ['.nxignore'],
         absolute: true,
         cwd,
         dot: true,
@@ -70,4 +74,32 @@ export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
       return [];
     }
   }
+}
+
+export async function getNxTrueAffectedProjects(
+  cwd: string
+): Promise<TrueAffectedProject[]> {
+  const projects = await getNxProjects(cwd);
+
+  return projects.map(({ name, project }) => {
+    let tsConfig = project.targets?.build?.options.tsConfig;
+
+    if (!tsConfig) {
+      const projectRoot = join(project.sourceRoot, '..');
+
+      if (project.projectType === 'library') {
+        tsConfig = join(projectRoot, 'tsconfig.lib.json');
+      }
+      if (!tsConfig || !existsSync(resolve(cwd, tsConfig))) {
+        tsConfig = join(projectRoot, 'tsconfig.json');
+      }
+    }
+
+    return {
+      name,
+      sourceRoot: project.sourceRoot,
+      implicitDependencies: project.implicitDependencies ?? [],
+      tsConfig,
+    };
+  });
 }

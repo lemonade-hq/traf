@@ -2,14 +2,14 @@ import { resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
 import { getChangedFiles } from './git';
 
-interface TrueAffectedProject {
+export interface TrueAffectedProject {
   name: string;
   sourceRoot: string;
   tsConfig: string;
   implicitDependencies?: string[];
 }
 
-interface TrueAffected {
+export interface TrueAffected {
   cwd: string;
   rootTsConfig: string;
   base?: string;
