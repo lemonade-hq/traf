@@ -2,7 +2,7 @@ name: '🏗️ PR Merged'
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   build:
@@ -47,6 +47,6 @@ jobs:
           git config --local user.name "GitHub Actions CI"
         shell: bash
 
-      - name: Master release
-        run: npx nx run workspace:version -- --push --baseBranch master
+      - name: Main release
+        run: npx nx run workspace:version -- --push --baseBranch main
         shell: bash
