@@ -1,6 +1,6 @@
 {
   "name": "@traf/nx",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "commonjs",
   "license": "MIT",
   "description": "A cli tool that wraps `@traf/core` to be used with Nx.",
