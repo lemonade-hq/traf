@@ -48,5 +48,5 @@ jobs:
         shell: bash
 
       - name: Main release
-        run: npx nx run workspace:version -- --push --baseBranch main
+        run: npm run version -- --push --baseBranch main
         shell: bash

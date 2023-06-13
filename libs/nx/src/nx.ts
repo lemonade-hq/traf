@@ -1,10 +1,13 @@
-import { resolve } from 'path';
+import { join, resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { globby } from 'globby';
+import { TrueAffectedProject } from '@traf/core';
+import { existsSync } from 'fs';
 
 interface NxProject {
   name: string;
   sourceRoot: string;
+  projectType: 'application' | 'library';
   implicitDependencies?: string[];
   targets?: {
     build?: {
@@ -70,4 +73,33 @@ export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
       return [];
     }
   }
+}
+
+export async function getNxTrueAffectedProjects(
+  cwd: string
+): Promise<TrueAffectedProject[]> {
+  const projects = await getNxProjects(cwd);
+
+  return projects.map(({ name, project }) => {
+    let tsConfig = project.targets?.build?.options.tsConfig;
+
+    if (tsConfig == null) {
+      if (project.projectType === 'library') {
+        tsConfig = join(project.sourceRoot, '..', 'tsconfig.lib.json');
+      } else {
+        tsConfig = join(project.sourceRoot, '..', 'tsconfig.src.json');
+      }
+
+      if (!existsSync(resolve(cwd, tsConfig))) {
+        tsConfig = join(project.sourceRoot, '..', 'tsconfig.json');
+      }
+    }
+
+    return {
+      name,
+      sourceRoot: project.sourceRoot,
+      implicitDependencies: project.implicitDependencies ?? [],
+      tsConfig,
+    };
+  });
 }

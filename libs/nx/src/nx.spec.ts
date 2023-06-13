@@ -1,8 +1,14 @@
-import { getNxProjects } from './nx';
+import { getNxProjects, getNxTrueAffectedProjects } from './nx';
 import * as globby from 'globby';
+import * as fs from 'fs';
 
 jest.mock('globby', () => ({
   globby: jest.fn(),
+}));
+
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  existsSync: jest.fn(),
 }));
 
 describe('nx', () => {
@@ -68,6 +74,223 @@ describe('nx', () => {
 
         expect(logSpy).toHaveBeenCalled();
         expect(projects).toEqual([]);
+      });
+    });
+  });
+
+  describe('getNxTrueAffectedProjects', () => {
+    beforeAll(() => {
+      jest.spyOn(globby, 'globby').mockResolvedValue(['./proj1/project.json']);
+    });
+
+    describe('tsConfig is set in build options', () => {
+      it('should return build script tsConfig if exists', async () => {
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                name: 'proj1',
+                sourceRoot: 'proj1/src',
+                targets: {
+                  build: {
+                    options: {
+                      tsConfig: 'proj1/tsconfig.custom.json',
+                    },
+                  },
+                },
+              })
+            );
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        const projects = await getNxTrueAffectedProjects(cwd);
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              tsConfig: 'proj1/tsconfig.custom.json',
+            }),
+          ])
+        );
+      });
+    });
+
+    describe('tsConfig is not set in build options', () => {
+      describe('fallback tsconfig is not found', () => {
+        beforeEach(() => {
+          jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+        });
+
+        it('should eventually return tsconfig.json', async () => {
+          jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+            const path = pathLike.toString();
+
+            if (path.endsWith('proj1/project.json')) {
+              return Promise.resolve(
+                JSON.stringify({
+                  name: 'proj1',
+                  sourceRoot: 'proj1/src',
+                })
+              );
+            }
+
+            return Promise.reject('File not found');
+          });
+
+          const cwd = 'libs/nx/src/__fixtures__/nx-project';
+          const projects = await getNxTrueAffectedProjects(cwd);
+
+          expect(projects).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                name: 'proj1',
+                tsConfig: expect.stringContaining('proj1/tsconfig.json'),
+              }),
+            ])
+          );
+        });
+      });
+
+      describe('fallback tsconfig is found', () => {
+        beforeEach(() => {
+          jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+        });
+
+        it('should return tsconfig.lib.json if projectType is library', async () => {
+          jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+            const path = pathLike.toString();
+
+            if (path.endsWith('proj1/project.json')) {
+              return Promise.resolve(
+                JSON.stringify({
+                  name: 'proj1',
+                  sourceRoot: 'proj1/src',
+                  projectType: 'library',
+                })
+              );
+            }
+
+            return Promise.reject('File not found');
+          });
+
+          const cwd = 'libs/nx/src/__fixtures__/nx-project';
+          const projects = await getNxTrueAffectedProjects(cwd);
+
+          expect(projects).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                name: 'proj1',
+                tsConfig: expect.stringContaining('proj1/tsconfig.lib.json'),
+              }),
+            ])
+          );
+        });
+
+        it('should return tsconfig.src.json if projectType is application', async () => {
+          jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+            const path = pathLike.toString();
+
+            if (path.endsWith('proj1/project.json')) {
+              return Promise.resolve(
+                JSON.stringify({
+                  name: 'proj1',
+                  sourceRoot: 'proj1/src',
+                  projectType: 'application',
+                })
+              );
+            }
+
+            return Promise.reject('File not found');
+          });
+
+          const cwd = 'libs/nx/src/__fixtures__/nx-project';
+          const projects = await getNxTrueAffectedProjects(cwd);
+
+          expect(projects).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                name: 'proj1',
+                tsConfig: expect.stringContaining('proj1/tsconfig.src.json'),
+              }),
+            ])
+          );
+        });
+      });
+    });
+
+    describe('implicit dependencies', () => {
+      it('should return implicit dependencies from project config', async () => {
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                name: 'proj1',
+                sourceRoot: 'proj1/src',
+                implicitDependencies: ['proj2'],
+              })
+            );
+          }
+
+          if (path.endsWith('proj2/project.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                name: 'proj2',
+                sourceRoot: 'proj2/src',
+              })
+            );
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        const projects = await getNxTrueAffectedProjects(cwd);
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              implicitDependencies: ['proj2'],
+            }),
+          ])
+        );
+      });
+
+      it('should fallback to empty array if implicit dependencies are not set', async () => {
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                name: 'proj1',
+                sourceRoot: 'proj1/src',
+              })
+            );
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        const projects = await getNxTrueAffectedProjects(cwd);
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              implicitDependencies: [],
+            }),
+          ])
+        );
       });
     });
   });

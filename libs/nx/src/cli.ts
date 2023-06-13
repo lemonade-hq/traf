@@ -5,7 +5,7 @@ import { CommandModule } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 import { trueAffected } from '@traf/core';
-import { getNxProjects } from './nx';
+import { getNxTrueAffectedProjects } from './nx';
 
 const color = '#ff0083';
 
@@ -22,24 +22,12 @@ const affectedAction = async ({
   restArgs,
   tsConfigFilePath,
 }: AffectedOptions) => {
-  const projects = await getNxProjects(cwd);
+  const projects = await getNxTrueAffectedProjects(cwd);
   const affected = await trueAffected({
     cwd,
     rootTsConfig: tsConfigFilePath,
     base,
-    projects: projects
-      .filter(
-        ({ project }) =>
-          project.targets?.build != null &&
-          project.targets.build.options.tsConfig != null
-      )
-      .map(({ name, project }) => ({
-        name,
-        sourceRoot: project.sourceRoot,
-        implicitDependencies: project.implicitDependencies ?? [],
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        tsConfig: project.targets!.build!.options.tsConfig,
-      })),
+    projects,
   });
 
   if (json) {
