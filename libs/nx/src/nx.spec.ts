@@ -192,7 +192,7 @@ describe('nx', () => {
           );
         });
 
-        it('should return tsconfig.src.json if projectType is application', async () => {
+        it('should return tsconfig.json if projectType is application', async () => {
           jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
             const path = pathLike.toString();
 
@@ -216,7 +216,7 @@ describe('nx', () => {
             expect.arrayContaining([
               expect.objectContaining({
                 name: 'proj1',
-                tsConfig: expect.stringContaining('proj1/tsconfig.src.json'),
+                tsConfig: expect.stringContaining('proj1/tsconfig.json'),
               }),
             ])
           );
