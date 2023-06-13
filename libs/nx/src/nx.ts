@@ -48,6 +48,7 @@ export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
 
       const files = await globby(combinedProjectGlobPattern, {
         ignore: staticIgnores,
+        ignoreFiles: ['.nxignore'],
         absolute: true,
         cwd,
         dot: true,
