@@ -9,7 +9,7 @@
     "lint": "nx run-many --target=lint --parallel=3 --all=true",
     "tsc": "nx run-many --target=tsc --parallel=3 --all=true",
     "spell": "nx run-many --target=spell --parallel=true --all=true",
-    "version": "nx run-many --target=version --parallel=true --all=true"
+    "version": "nx run-many --target=version --all=true"
   },
   "private": true,
   "devDependencies": {
