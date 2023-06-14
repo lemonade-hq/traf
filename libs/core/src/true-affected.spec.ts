@@ -115,6 +115,61 @@ describe('trueAffected', () => {
     expect(affected).toEqual(['proj1', 'proj3']);
   });
 
+  it('should add all source files if missing tsconfig', async () => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj1/index.ts',
+        changedLines: [6],
+      },
+    ]);
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      rootTsConfig: 'tsconfig.json',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          implicitDependencies: ['proj1'],
+        },
+      ],
+    });
+
+    expect(affected).toEqual(['proj1', 'proj3']);
+  });
+
+  it('should support no root tsconfig', async () => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj1/index.ts',
+        changedLines: [6],
+      },
+    ]);
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          implicitDependencies: ['proj1'],
+        },
+      ],
+    });
+
+    expect(affected).toEqual(['proj1', 'proj3']);
+  });
+
   it('should ignore files that are not in projects files', async () => {
     jest.spyOn(git, 'getChangedFiles').mockReturnValue([
       {

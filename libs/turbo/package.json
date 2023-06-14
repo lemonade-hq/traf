@@ -1,0 +1,27 @@
+{
+  "name": "@traf/turbo",
+  "version": "0.0.7",
+  "type": "commonjs",
+  "license": "MIT",
+  "description": "A cli tool that wraps `@traf/core` to be used with Turborepo.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lemonade-hq/traf.git",
+    "directory": "libs/turbo"
+  },
+  "keywords": [
+    "monorepo",
+    "monorepos",
+    "turbo",
+    "turbo-workspace",
+    "true-affected",
+    "affected"
+  ],
+  "homepage": "https://github.com/lemonade-hq/traf#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "traf-turbo": "bin/traf-turbo.js"
+  }
+}

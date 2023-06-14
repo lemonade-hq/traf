@@ -16,7 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "@traf/core": ["libs/core/src/index.ts"],
-      "@traf/nx": ["libs/nx/src/cli.ts"]
+      "@traf/nx": ["libs/nx/src/cli.ts"],
+      "@traf/turbo": ["libs/turbo/src/cli.ts"],
     }
   },
   "exclude": ["node_modules", "tmp"]
