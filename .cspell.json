@@ -4,7 +4,8 @@
     "words": [
         "iife",
         "nxignore",
-        "traf"
+        "traf",
+        "turborepo"
     ],
     "ignorePaths": [
         "**/node_modules/**",

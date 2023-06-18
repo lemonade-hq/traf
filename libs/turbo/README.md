@@ -2,15 +2,15 @@
 
 Avoid unnecessary builds, tests, lint and more in your monorepo CI. Optimize your development process by intelligently finding affected dependencies and selectively triggering builds and tests only when needed.
 
-## `@traf/nx`
+## `@traf/turbo`
 
-A cli tool that wraps [`@traf/core`](https://github.com/lemonade-hq/traf#trafcore) to be used with Nx.
-> Will automatically find all projects in the nx workspace.
+A cli tool that wraps [`@traf/core`](https://github.com/lemonade-hq/traf#trafcore) to be used with turborepo.
+> Will automatically find all projects in the turborepo workspace.
 
 ### **Usage**
 
 ```bash
-npx @traf/nx@latest affected <action> [options]
+npx @traf/turbo@latest affected <action> [options]
 ```
 
 ### **Options**
