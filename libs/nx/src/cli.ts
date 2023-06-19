@@ -102,7 +102,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       default: false,
     },
     includeFiles: {
-      desc: 'Include files in the calculation of affected projects',
+      desc: 'Comma separated list of files to include',
     },
   },
   handler: async ({
