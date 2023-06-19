@@ -21,6 +21,7 @@ const affectedAction = async ({
   json,
   restArgs,
   tsConfigFilePath,
+  includeFiles,
 }: AffectedOptions) => {
   const projects = await getNxTrueAffectedProjects(cwd);
   const affected = await trueAffected({
@@ -28,6 +29,7 @@ const affectedAction = async ({
     rootTsConfig: tsConfigFilePath,
     base,
     projects,
+    includeFiles: includeFiles?.split(','),
   });
 
   if (json) {
@@ -70,6 +72,7 @@ interface AffectedOptions {
   action: string;
   base: string;
   json: boolean;
+  includeFiles?: string;
   restArgs: string[];
 }
 
@@ -98,6 +101,9 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       desc: 'Output affected projects as JSON',
       default: false,
     },
+    includeFiles: {
+      desc: 'Include files in the calculation of affected projects',
+    },
   },
   handler: async ({
     cwd,
@@ -105,6 +111,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     action,
     base,
     json,
+    includeFiles,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     $0,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -117,6 +124,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       action,
       base,
       json,
+      includeFiles,
       restArgs: Object.entries(rest).map(([key, value]) => `--${key}=${value}`),
     });
   },

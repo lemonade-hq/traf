@@ -15,7 +15,6 @@ In Lemonade we have several big monorepos with complex dep graph, and we found t
 This is where true affected comes in. It will find the affected projects by **lines** changes in the current branch.
 ![image](https://github.com/lemonade-hq/traf/assets/6004537/2e2d9b6e-3a40-4673-8783-6e444ac59c8f)
 
-
 ## Packages
 
 - [@traf/core](#trafcore)
@@ -51,23 +50,24 @@ const affected = await trueAffected({
 
 #### **Options**
 
-| Option | Type | Description | Default |
-| --- | --- | --- | --- |
-| `rootTsConfig` | `string` | The path to the root tsconfig file ||
-| `projects` | `Project[]` | An array of projects to check ||
-| `cwd` | `string` | The current working directory ||
-| `base` | `string` | The base branch to compare against | `origin/main` |
+| Option         | Type        | Description                                           | Default       |
+| -------------- | ----------- | ----------------------------------------------------- | ------------- |
+| `rootTsConfig` | `string`    | The path to the root tsconfig file                    |               |
+| `projects`     | `Project[]` | An array of projects to check                         |               |
+| `cwd`          | `string`    | The current working directory                         |               |
+| `base`         | `string`    | The base branch to compare against                    | `origin/main` |
+| `includeFiles` | `string[]`  | File names to include that are not part of `tsconfig` |               |
 
 > `rootTsConfig` - The path to the root tsconfig file, should include the `paths` prop with all projects mapping so `ts-morph` can find the references.
 
 #### **Project**
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `name` | `string` | The project name
-| `sourceRoot` | `string` | The project source root
-| `tsConfig` | `string` | The project tsconfig file (should only include the project files)
-| `implicitDependencies` | `string[]` | An array of implicit dependencies
+| Option                 | Type       | Description                                                       |
+| ---------------------- | ---------- | ----------------------------------------------------------------- |
+| `name`                 | `string`   | The project name                                                  |
+| `sourceRoot`           | `string`   | The project source root                                           |
+| `tsConfig`             | `string`   | The project tsconfig file (should only include the project files) |
+| `implicitDependencies` | `string[]` | An array of implicit dependencies                                 |
 
 #### How it works?
 
@@ -81,6 +81,7 @@ The algorithm is based on the following steps:
 ### `@traf/nx`
 
 A cli tool that wraps `@traf/core` to be used with Nx.
+
 > Will automatically find all projects in the nx workspace.
 
 #### **Usage**
@@ -91,10 +92,11 @@ npx @traf/nx@latest affected <action> [options]
 
 #### **Options**
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `--cwd` | The current working directory | `process.cwd()` |
-| `--base` | The base branch to compare against | `origin/main` |
-| `--tsConfigFilePath` | The path to the root tsconfig file | `tsconfig.base.json` |
-| `--action` | The action to perform. Can be any command | `log` |
-| `--json` | Output the result as JSON | `false` |
+| Option               | Description                               | Default              |
+| -------------------- | ----------------------------------------- | -------------------- |
+| `--cwd`              | The current working directory             | `process.cwd()`      |
+| `--base`             | The base branch to compare against        | `origin/main`        |
+| `--tsConfigFilePath` | The path to the root tsconfig file        | `tsconfig.base.json` |
+| `--action`           | The action to perform. Can be any command | `log`                |
+| `--json`             | Output the result as JSON                 | `false`              |
+| `--includeFiles`     | Comma separated list of files to include  |                      |

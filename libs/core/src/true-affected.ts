@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { Project, Node, ts, SyntaxKind } from 'ts-morph';
+import { Project, Node, ts, SyntaxKind, SourceFile } from 'ts-morph';
 import { getChangedFiles } from './git';
 
 export interface TrueAffectedProject {
@@ -14,6 +14,7 @@ export interface TrueAffected {
   rootTsConfig: string;
   base?: string;
   projects: TrueAffectedProject[];
+  includeFiles?: string[];
 }
 
 const ignoredRootNodeTypes = [
@@ -44,6 +45,7 @@ export const trueAffected = async ({
   rootTsConfig,
   base = 'origin/main',
   projects,
+  includeFiles = [],
 }: TrueAffected) => {
   const project = new Project({
     tsConfigFilePath: resolve(cwd, rootTsConfig),
@@ -68,7 +70,9 @@ export const trueAffected = async ({
   });
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
-    ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
+    ({ filePath }) =>
+      includeFiles.some((fileName) => filePath.endsWith(fileName)) ||
+      project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const affectedPackages = new Set<string>();
@@ -110,7 +114,13 @@ export const trueAffected = async ({
   };
 
   changedFiles.forEach(({ filePath, changedLines }) => {
-    const sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
+    let sourceFile: SourceFile;
+    try {
+      sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
+    } catch {
+      project.addSourceFileAtPath(resolve(cwd, filePath));
+      sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
+    }
 
     changedLines.forEach((line) => {
       try {
