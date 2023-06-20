@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { Project, Node, ts, SyntaxKind, SourceFile } from 'ts-morph';
+import { Project, Node, ts, SyntaxKind } from 'ts-morph';
 import { getChangedFiles } from './git';
 
 export interface TrueAffectedProject {
@@ -65,7 +65,7 @@ export const trueAffected = async ({
     new Map<string, string[]>()
   );
 
-  projects.forEach(({ tsConfig, sourceRoot }) => {
+  projects.forEach(({ tsConfig }) => {
     project.addSourceFilesFromTsConfig(resolve(cwd, tsConfig));
   });
 

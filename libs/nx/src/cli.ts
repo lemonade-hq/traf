@@ -9,12 +9,12 @@ import { getNxTrueAffectedProjects } from './nx';
 
 const color = '#ff0083';
 
-const log = (message: string) =>
+export const log = (message: string) =>
   console.log(
     ` ${chalk.hex(color)('>')} ${chalk.bgHex(color).bold(' TRAF ')}  ${message}`
   );
 
-const affectedAction = async ({
+export const affectedAction = async ({
   cwd,
   action = 'log',
   base = 'origin/main',
@@ -29,7 +29,7 @@ const affectedAction = async ({
     rootTsConfig: tsConfigFilePath,
     base,
     projects,
-    includeFiles: includeFiles?.split(','),
+    includeFiles,
   });
 
   if (json) {
@@ -72,7 +72,7 @@ interface AffectedOptions {
   action: string;
   base: string;
   json: boolean;
-  includeFiles?: string;
+  includeFiles: string[];
   restArgs: string[];
 }
 
@@ -103,6 +103,11 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     },
     includeFiles: {
       desc: 'Comma separated list of files to include',
+      type: 'array',
+      default: [],
+      coerce: (array: string[]) => {
+        return array.flatMap((v) => v.split(','));
+      },
     },
   },
   handler: async ({
@@ -139,4 +144,6 @@ export async function run(): Promise<void> {
     .strictCommands().argv;
 }
 
-run();
+if (process.env['JEST_WORKER_ID'] == null) {
+  run();
+}
