@@ -65,14 +65,19 @@ export const trueAffected = async ({
     new Map<string, string[]>()
   );
 
-  projects.forEach(({ tsConfig }) => {
+  projects.forEach(({ tsConfig, sourceRoot }) => {
     project.addSourceFilesFromTsConfig(resolve(cwd, tsConfig));
   });
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
     ({ filePath }) =>
-      includeFiles.some((fileName) => filePath.endsWith(fileName)) ||
-      project.getSourceFile(resolve(cwd, filePath)) != null
+      includeFiles.some((fileName) => {
+        if (filePath.endsWith(fileName)) {
+          project.addSourceFileAtPath(resolve(cwd, filePath));
+          return true;
+        }
+        return false;
+      }) || project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const affectedPackages = new Set<string>();
@@ -114,13 +119,7 @@ export const trueAffected = async ({
   };
 
   changedFiles.forEach(({ filePath, changedLines }) => {
-    let sourceFile: SourceFile;
-    try {
-      sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
-    } catch {
-      project.addSourceFileAtPath(resolve(cwd, filePath));
-      sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
-    }
+    const sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
 
     changedLines.forEach((line) => {
       try {
