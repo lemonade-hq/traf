@@ -1,7 +1,7 @@
 import { getNxProjects, getNxTrueAffectedProjects } from './nx';
 import * as globby from 'globby';
 import * as fs from 'fs';
-import { mockGlobby, projectCwd, workspaceCwd } from './mocks';
+import { projectCwd, workspaceCwd } from './mocks';
 
 jest.mock('globby', () => ({
   globby: jest.fn(),
@@ -35,7 +35,9 @@ describe('nx', () => {
 
     describe('nx workspace with nested project.json', () => {
       beforeEach(() => {
-        mockGlobby();
+        jest
+          .spyOn(globby, 'globby')
+          .mockResolvedValue(['./proj1/project.json', './proj2/project.json']);
       });
 
       it('should return all found nx projects', async () => {
