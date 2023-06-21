@@ -27,10 +27,6 @@ jest.mock('node:child_process', () => ({
 
 async function runCommand(args: string[]) {
   process.argv = ['node', 'cli.js', ...args];
-
-  // const { run } = await import('./cli');
-
-  // Require the yargs CLI script
   return cli.run();
 }
 

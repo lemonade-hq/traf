@@ -67,9 +67,9 @@ export const trueAffected = async ({
 
   projects.forEach(({ tsConfig, sourceRoot }) => {
     project.addSourceFilesFromTsConfig(resolve(cwd, tsConfig));
-    includeFiles.forEach((path) => {
-      project.addSourceFilesAtPaths(`${resolve(cwd, sourceRoot)}/${path}`);
-    });
+    project.addSourceFilesAtPaths(
+      includeFiles.map((path) => `${resolve(cwd, sourceRoot)}/${path}`)
+    );
   });
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
