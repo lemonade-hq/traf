@@ -218,8 +218,20 @@ describe('trueAffected', () => {
     expect(affected).toEqual(['proj1']);
   });
 
-  it('should include files', async () => {
+  it.each([
+    ['regular path', ['package.json'], ['proj3']],
+    ['glob path', ['**/package.json'], ['proj3']],
+    [
+      'multiple paths',
+      ['package.json', '**/jest.config.js'],
+      ['proj2', 'proj3'],
+    ],
+  ])('should include files with %s', async (title, filePatterns, expected) => {
     jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj2/jest.config.js',
+        changedLines: [1],
+      },
       {
         filePath: 'proj3/package.json',
         changedLines: [2],
@@ -247,10 +259,10 @@ describe('trueAffected', () => {
           tsConfig: 'proj3/tsconfig.json',
         },
       ],
-      includeFiles: ['package.json'],
+      includeFiles: filePatterns,
     });
 
-    expect(affected).toEqual(['proj3']);
+    expect(affected).toEqual(expected);
   });
 });
 

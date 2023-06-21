@@ -1,6 +1,8 @@
 import { resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
 import { getChangedFiles } from './git';
+import { minimatch } from 'minimatch';
+import { isDynamicPattern } from 'globby';
 
 export interface TrueAffectedProject {
   name: string;
@@ -65,18 +67,20 @@ export const trueAffected = async ({
     new Map<string, string[]>()
   );
 
-  projects.forEach(({ tsConfig }) => {
+  projects.forEach(({ tsConfig, sourceRoot }) => {
     project.addSourceFilesFromTsConfig(resolve(cwd, tsConfig));
+    includeFiles.forEach((path) => {
+      project.addSourceFilesAtPaths(`${resolve(cwd, sourceRoot)}/${path}`);
+    });
   });
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
     ({ filePath }) =>
-      includeFiles.some((fileName) => {
-        if (filePath.endsWith(fileName)) {
-          project.addSourceFileAtPath(resolve(cwd, filePath));
-          return true;
-        }
-        return false;
+      includeFiles.some((path) => {
+        return (
+          minimatch(resolve(cwd, filePath), path) ||
+          resolve(cwd, filePath).endsWith(path)
+        );
       }) || project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
