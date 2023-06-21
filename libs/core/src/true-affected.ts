@@ -76,12 +76,8 @@ export const trueAffected = async ({
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
     ({ filePath }) =>
-      includeFiles.some((path) => {
-        return (
-          minimatch(resolve(cwd, filePath), path) ||
-          resolve(cwd, filePath).endsWith(path)
-        );
-      }) || project.getSourceFile(resolve(cwd, filePath)) != null
+      includeFiles.some((path) => minimatch(resolve(cwd, filePath), path)) ||
+      project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const affectedPackages = new Set<string>();

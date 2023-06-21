@@ -92,11 +92,11 @@ npx @traf/nx@latest affected <action> [options]
 
 #### **Options**
 
-| Option               | Description                               | Default              |
-| -------------------- | ----------------------------------------- | -------------------- |
-| `--cwd`              | The current working directory             | `process.cwd()`      |
-| `--base`             | The base branch to compare against        | `origin/main`        |
-| `--tsConfigFilePath` | The path to the root tsconfig file        | `tsconfig.base.json` |
-| `--action`           | The action to perform. Can be any command | `log`                |
-| `--json`             | Output the result as JSON                 | `false`              |
-| `--includeFiles`     | Comma separated list of files to include  |                      |
+| Option               | Description                                                                          | Default              |
+| -------------------- | ------------------------------------------------------------------------------------ | -------------------- |
+| `--cwd`              | The current working directory                                                        | `process.cwd()`      |
+| `--base`             | The base branch to compare against                                                   | `origin/main`        |
+| `--tsConfigFilePath` | The path to the root tsconfig file                                                   | `tsconfig.base.json` |
+| `--action`           | The action to perform. Can be any command                                            | `log`                |
+| `--json`             | Output the result as JSON                                                            | `false`              |
+| `--includeFiles`     | Comma separated list of glob patterns to include (relative to projects' source root) |                      |

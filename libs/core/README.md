@@ -40,13 +40,13 @@ const affected = await trueAffected({
 
 ### **Options**
 
-| Option         | Type        | Description                                           | Default       |
-| -------------- | ----------- | ----------------------------------------------------- | ------------- |
-| `rootTsConfig` | `string`    | The path to the root tsconfig file                    |               |
-| `projects`     | `Project[]` | An array of projects to check                         |               |
-| `cwd`          | `string`    | The current working directory                         |               |
-| `base`         | `string`    | The base branch to compare against                    | `origin/main` |
-| `includeFiles` | `string[]`  | File names to include that are not part of `tsconfig` |               |
+| Option         | Type        | Description                                                  | Default       |
+| -------------- | ----------- | ------------------------------------------------------------ | ------------- |
+| `rootTsConfig` | `string`    | The path to the root tsconfig file                           |               |
+| `projects`     | `Project[]` | An array of projects to check                                |               |
+| `cwd`          | `string`    | The current working directory                                |               |
+| `base`         | `string`    | The base branch to compare against                           | `origin/main` |
+| `includeFiles` | `string[]`  | Glob patterns to include (relative to projects' source root) |               |
 
 > `rootTsConfig` - The path to the root tsconfig file, should include the `paths` prop with all projects mapping so `ts-morph` can find the references.
 
