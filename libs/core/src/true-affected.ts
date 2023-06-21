@@ -1,8 +1,6 @@
 import { resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
 import { getChangedFiles } from './git';
-import { minimatch } from 'minimatch';
-import { isDynamicPattern } from 'globby';
 
 export interface TrueAffectedProject {
   name: string;
@@ -75,9 +73,7 @@ export const trueAffected = async ({
   });
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
-    ({ filePath }) =>
-      includeFiles.some((path) => minimatch(resolve(cwd, filePath), path)) ||
-      project.getSourceFile(resolve(cwd, filePath)) != null
+    ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const affectedPackages = new Set<string>();

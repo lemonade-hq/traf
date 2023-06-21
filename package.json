@@ -40,7 +40,6 @@
   "dependencies": {
     "chalk": "^5.2.0",
     "globby": "^13.1.4",
-    "minimatch": "^9.0.1",
     "ts-morph": "^18.0.0",
     "tslib": "^2.3.0",
     "yargs": "^17.7.2"
