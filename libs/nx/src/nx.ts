@@ -29,9 +29,9 @@ interface WorkspaceProject {
 
 export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
   try {
-    const workspace = JSON.parse(
-      await readFile(resolve(cwd, 'workspace.json'), 'utf-8')
-    ) as WorkspaceJsonConfiguration;
+    const path = resolve(cwd, 'workspace.json');
+    const file = await readFile(path, 'utf-8');
+    const workspace = JSON.parse(file) as WorkspaceJsonConfiguration;
 
     return Object.entries(workspace.projects).map(([name, project]) => ({
       name,

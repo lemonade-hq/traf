@@ -40,23 +40,24 @@ const affected = await trueAffected({
 
 ### **Options**
 
-| Option | Type | Description | Default |
-| --- | --- | --- | --- |
-| `rootTsConfig` | `string` | The path to the root tsconfig file ||
-| `projects` | `Project[]` | An array of projects to check ||
-| `cwd` | `string` | The current working directory ||
-| `base` | `string` | The base branch to compare against | `origin/main` |
+| Option         | Type        | Description                                                  | Default       |
+| -------------- | ----------- | ------------------------------------------------------------ | ------------- |
+| `rootTsConfig` | `string`    | The path to the root tsconfig file                           |               |
+| `projects`     | `Project[]` | An array of projects to check                                |               |
+| `cwd`          | `string`    | The current working directory                                |               |
+| `base`         | `string`    | The base branch to compare against                           | `origin/main` |
+| `includeFiles` | `string[]`  | Glob patterns to include (relative to projects' source root) |               |
 
 > `rootTsConfig` - The path to the root tsconfig file, should include the `paths` prop with all projects mapping so `ts-morph` can find the references.
 
 ### **Project**
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `name` | `string` | The project name
-| `sourceRoot` | `string` | The project source root
-| `tsConfig` | `string` | The project tsconfig file (should only include the project files)
-| `implicitDependencies` | `string[]` | An array of implicit dependencies
+| Option                 | Type       | Description                                                       |
+| ---------------------- | ---------- | ----------------------------------------------------------------- |
+| `name`                 | `string`   | The project name                                                  |
+| `sourceRoot`           | `string`   | The project source root                                           |
+| `tsConfig`             | `string`   | The project tsconfig file (should only include the project files) |
+| `implicitDependencies` | `string[]` | An array of implicit dependencies                                 |
 
 ### How it works?
 
@@ -66,4 +67,3 @@ The algorithm is based on the following steps:
 2. Using [ts-morph](https://ts-morph.com/) to find the changed element (function, class, const etc..) per line.
 3. Using ts-morph [findReferences](https://ts-morph.com/navigation/finding-references#finding-referencing-nodes) to find all references to the changed element recursively.
 4. For each reference, find the project that contains the reference and add it to the affected projects list.
-

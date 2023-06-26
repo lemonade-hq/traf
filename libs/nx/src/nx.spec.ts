@@ -1,6 +1,7 @@
 import { getNxProjects, getNxTrueAffectedProjects } from './nx';
 import * as globby from 'globby';
 import * as fs from 'fs';
+import { projectCwd, workspaceCwd } from './mocks';
 
 jest.mock('globby', () => ({
   globby: jest.fn(),
@@ -14,9 +15,8 @@ jest.mock('fs', () => ({
 describe('nx', () => {
   describe('getNxProjects', () => {
     describe('nx workspace with workspace.json', () => {
-      const cwd = 'libs/nx/src/__fixtures__/nx-workspace';
       it('should return all found nx projects', async () => {
-        const projects = await getNxProjects(cwd);
+        const projects = await getNxProjects(workspaceCwd);
 
         expect(projects).toEqual(
           expect.arrayContaining([
@@ -34,8 +34,6 @@ describe('nx', () => {
     });
 
     describe('nx workspace with nested project.json', () => {
-      const cwd = 'libs/nx/src/__fixtures__/nx-project';
-
       beforeEach(() => {
         jest
           .spyOn(globby, 'globby')
@@ -43,7 +41,7 @@ describe('nx', () => {
       });
 
       it('should return all found nx projects', async () => {
-        const projects = await getNxProjects(cwd);
+        const projects = await getNxProjects(projectCwd);
 
         expect(projects).toEqual(
           expect.arrayContaining([

@@ -14,6 +14,7 @@ export interface TrueAffected {
   rootTsConfig: string;
   base?: string;
   projects: TrueAffectedProject[];
+  includeFiles?: string[];
 }
 
 const ignoredRootNodeTypes = [
@@ -44,6 +45,7 @@ export const trueAffected = async ({
   rootTsConfig,
   base = 'origin/main',
   projects,
+  includeFiles = [],
 }: TrueAffected) => {
   const project = new Project({
     tsConfigFilePath: resolve(cwd, rootTsConfig),
@@ -63,8 +65,11 @@ export const trueAffected = async ({
     new Map<string, string[]>()
   );
 
-  projects.forEach(({ tsConfig }) => {
+  projects.forEach(({ tsConfig, sourceRoot }) => {
     project.addSourceFilesFromTsConfig(resolve(cwd, tsConfig));
+    project.addSourceFilesAtPaths(
+      includeFiles.map((path) => `${resolve(cwd, sourceRoot)}/${path}`)
+    );
   });
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(

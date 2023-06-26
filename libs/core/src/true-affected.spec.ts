@@ -217,6 +217,53 @@ describe('trueAffected', () => {
 
     expect(affected).toEqual(['proj1']);
   });
+
+  it.each([
+    ['regular path', ['package.json'], ['proj3']],
+    ['glob path', ['**/package.json'], ['proj3']],
+    [
+      'multiple paths',
+      ['package.json', '**/jest.config.js'],
+      ['proj2', 'proj3'],
+    ],
+  ])('should include files with %s', async (title, filePatterns, expected) => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj2/jest.config.js',
+        changedLines: [1],
+      },
+      {
+        filePath: 'proj3/package.json',
+        changedLines: [2],
+      },
+    ]);
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      rootTsConfig: 'tsconfig.json',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+          tsConfig: 'proj1/tsconfig.json',
+        },
+        {
+          name: 'proj2',
+          sourceRoot: 'proj2/',
+          tsConfig: 'proj2/tsconfig.json',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          tsConfig: 'proj3/tsconfig.json',
+        },
+      ],
+      includeFiles: filePatterns,
+    });
+
+    expect(affected).toEqual(expected);
+  });
 });
 
 describe('findRootNode', () => {
