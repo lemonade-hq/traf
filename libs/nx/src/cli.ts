@@ -17,6 +17,7 @@ export const log = (message: string) =>
 export const affectedAction = async ({
   cwd,
   action = 'log',
+  all = false,
   base = 'origin/main',
   json,
   restArgs,
@@ -24,13 +25,16 @@ export const affectedAction = async ({
   includeFiles,
 }: AffectedOptions) => {
   const projects = await getNxTrueAffectedProjects(cwd);
-  const affected = await trueAffected({
-    cwd,
-    rootTsConfig: tsConfigFilePath,
-    base,
-    projects,
-    includeFiles,
-  });
+
+  const affected = all
+    ? projects.map((p) => p.name)
+    : await trueAffected({
+        cwd,
+        rootTsConfig: tsConfigFilePath,
+        base,
+        projects,
+        includeFiles,
+      });
 
   if (json) {
     console.log(JSON.stringify(affected));
@@ -70,6 +74,7 @@ interface AffectedOptions {
   cwd: string;
   tsConfigFilePath: string;
   action: string;
+  all: boolean;
   base: string;
   json: boolean;
   includeFiles: string[];
@@ -93,6 +98,10 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       desc: 'Action to run on affected projects',
       default: 'log',
     },
+    all: {
+      desc: 'Outputs all available projects regardless of changes',
+      default: false,
+    },
     base: {
       desc: 'Base branch to compare against',
       default: 'origin/main',
@@ -113,6 +122,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
   handler: async ({
     cwd,
     tsConfigFilePath,
+    all,
     action,
     base,
     json,
@@ -126,6 +136,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     await affectedAction({
       cwd,
       tsConfigFilePath,
+      all,
       action,
       base,
       json,

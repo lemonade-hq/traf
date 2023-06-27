@@ -96,6 +96,7 @@ npx @traf/nx@latest affected <action> [options]
 | -------------------- | ------------------------------------------------------------------------------------ | -------------------- |
 | `--cwd`              | The current working directory                                                        | `process.cwd()`      |
 | `--base`             | The base branch to compare against                                                   | `origin/main`        |
+| `--all`              | Outputs all available projects regardless of changes                                 | `false`              |
 | `--tsConfigFilePath` | The path to the root tsconfig file                                                   | `tsconfig.base.json` |
 | `--action`           | The action to perform. Can be any command                                            | `log`                |
 | `--json`             | Output the result as JSON                                                            | `false`              |
