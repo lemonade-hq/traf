@@ -51,6 +51,7 @@ describe('cli', () => {
       runCommand(['affected']);
       expect(affectedActionSpy).toBeCalledWith({
         action: 'log',
+        all: false,
         base: 'origin/main',
         cwd: process.cwd(),
         includeFiles: [],
@@ -64,6 +65,7 @@ describe('cli', () => {
       runCommand([
         'affected',
         'build',
+        '--all=true',
         '--base=master',
         '--tsConfigFilePath=tsconfig.json',
         `--cwd=${workspaceCwd}`,
@@ -71,6 +73,7 @@ describe('cli', () => {
       ]);
       expect(affectedActionSpy).toBeCalledWith({
         action: 'build',
+        all: 'true',
         base: 'master',
         cwd: resolve(process.cwd(), workspaceCwd),
         includeFiles: ['package.json', 'jest.setup.js'],
@@ -105,6 +108,7 @@ describe('cli', () => {
 
       await cli.affectedAction({
         action: 'log',
+        all: false,
         base: 'origin/main',
         cwd: process.cwd(),
         includeFiles: [],
@@ -129,6 +133,7 @@ describe('cli', () => {
 
       await cli.affectedAction({
         action: 'log',
+        all: false,
         base: 'origin/main',
         cwd: process.cwd(),
         includeFiles: [],
@@ -145,6 +150,7 @@ describe('cli', () => {
 
       await cli.affectedAction({
         action: 'log',
+        all: false,
         base: 'origin/main',
         cwd: process.cwd(),
         includeFiles: [],
@@ -164,6 +170,7 @@ describe('cli', () => {
 
       await cli.affectedAction({
         action: 'build',
+        all: false,
         base: 'origin/main',
         cwd: process.cwd(),
         includeFiles: [],
@@ -181,6 +188,47 @@ describe('cli', () => {
         expectedCommand,
         expect.anything()
       );
+    });
+
+    describe('`all` option', () => {
+      beforeEach(() => {
+        trafSpy.mockResolvedValueOnce(['proj1']);
+
+        getNxTrueAffectedProjectsSpy.mockResolvedValueOnce([
+          { name: 'proj1', sourceRoot: 'mock', tsConfig: 'mock' },
+          { name: 'proj2', sourceRoot: 'mock', tsConfig: 'mock' },
+        ]);
+      })
+
+      it('should return only affected projects when `all` is false', async () => {
+        await cli.affectedAction({
+          action: 'log',
+          all: false,
+          base: 'origin/main',
+          cwd: process.cwd(),
+          includeFiles: [],
+          json: false,
+          restArgs: [],
+          tsConfigFilePath: 'tsconfig.base.json',
+        });
+
+        expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1');
+      });
+
+      it('should return all projects regardless of changes when `all` is true', async () => {
+        await cli.affectedAction({
+          action: 'log',
+          all: true,
+          base: 'origin/main',
+          cwd: process.cwd(),
+          includeFiles: [],
+          json: false,
+          restArgs: [],
+          tsConfigFilePath: 'tsconfig.base.json',
+        });
+
+        expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1\n - proj2');
+      });
     });
   });
 });
