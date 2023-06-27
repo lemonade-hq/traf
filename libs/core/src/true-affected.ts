@@ -1,17 +1,18 @@
-import { resolve } from 'path';
+import { existsSync } from 'fs';
+import { join, resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
 import { getChangedFiles } from './git';
 
 export interface TrueAffectedProject {
   name: string;
   sourceRoot: string;
-  tsConfig: string;
+  tsConfig?: string;
   implicitDependencies?: string[];
 }
 
 export interface TrueAffected {
   cwd: string;
-  rootTsConfig: string;
+  rootTsConfig?: string;
   base?: string;
   projects: TrueAffectedProject[];
   includeFiles?: string[];
@@ -48,11 +49,15 @@ export const trueAffected = async ({
   includeFiles = [],
 }: TrueAffected) => {
   const project = new Project({
-    tsConfigFilePath: resolve(cwd, rootTsConfig),
-    skipAddingFilesFromTsConfig: true,
     compilerOptions: {
       allowJs: true,
     },
+    ...(rootTsConfig == null
+      ? {}
+      : {
+          tsConfigFilePath: resolve(cwd, rootTsConfig),
+          skipAddingFilesFromTsConfig: true,
+        }),
   });
 
   const implicitDeps = (
@@ -65,12 +70,23 @@ export const trueAffected = async ({
     new Map<string, string[]>()
   );
 
-  projects.forEach(({ tsConfig, sourceRoot }) => {
-    project.addSourceFilesFromTsConfig(resolve(cwd, tsConfig));
-    project.addSourceFilesAtPaths(
-      includeFiles.map((path) => `${resolve(cwd, sourceRoot)}/${path}`)
-    );
-  });
+  projects.forEach(
+    ({ sourceRoot, tsConfig = join(sourceRoot, 'tsconfig.json') }) => {
+      const tsConfigPath = resolve(cwd, tsConfig);
+
+      if (existsSync(tsConfigPath)) {
+        project.addSourceFilesFromTsConfig(tsConfigPath);
+      } else {
+        project.addSourceFilesAtPaths(
+          join(resolve(cwd, sourceRoot), '**/*.{ts,js}')
+        );
+      }
+
+      project.addSourceFilesAtPaths(
+        includeFiles.map((path) => `${resolve(cwd, sourceRoot)}/${path}`)
+      );
+    }
+  );
 
   const changedFiles = getChangedFiles({ base, cwd }).filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null

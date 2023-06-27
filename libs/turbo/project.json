@@ -1,17 +1,17 @@
 {
-  "name": "nx",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/nx/src",
+  "name": "turbo",
+  "$schema": "../../node_modules/turbo/schemas/project-schema.json",
+  "sourceRoot": "libs/turbo/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/nx",
-        "main": "libs/nx/src/cli.ts",
-        "tsConfig": "libs/nx/tsconfig.lib.json",
-        "assets": ["libs/nx/*.md", "libs/nx/bin/*"],
+        "outputPath": "dist/libs/turbo",
+        "main": "libs/turbo/src/cli.ts",
+        "tsConfig": "libs/turbo/tsconfig.lib.json",
+        "assets": ["libs/turbo/*.md", "libs/turbo/bin/*"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "banner": {
@@ -24,14 +24,14 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["libs/nx/**/*.ts"]
+        "lintFilePatterns": ["libs/turbo/**/*.ts"]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/nx/jest.config.ts",
+        "jestConfig": "libs/turbo/jest.config.ts",
         "passWithNoTests": true
       },
       "configurations": {
@@ -50,31 +50,21 @@
     "spell": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "cspell \"./libs/nx/**/*.ts\" --no-progress"
+        "command": "cspell \"./libs/turbo/**/*.ts\" --no-progress"
       }
     },
     "publish": {
-      "executor": "nx:run-commands",
+      "executor": "turbo:run-commands",
       "options": {
-        "cwd": "./dist/libs/nx",
+        "cwd": "./dist/libs/turbo",
         "command": "npm publish"
-      }
-    },
-    "print-affected": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          {
-            "command": "npx tsx --tsconfig libs/nx/tsconfig.lib.json libs/nx/src/cli.ts affected"
-          }
-        ]
       }
     },
     "version": {
       "executor": "@jscutlery/semver:version",
       "options": {
         "syncVersions": true,
-        "postTargets": ["github"],
+        "postTargets": ["turbo:github"],
         "commitMessageFormat": "chore(release): bump version to ${version} [skip ci]",
         "skipProjectChangelog": true
       }
