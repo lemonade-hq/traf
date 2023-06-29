@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'fs/promises';
 import * as childProcess from 'node:child_process';
 
 const cwd = 'libs/core/src/__fixtures__/git';
+const absoluteCwd = resolve(cwd);
 const branch = 'main';
 
 describe('git', () => {
@@ -115,10 +116,24 @@ describe('git', () => {
   });
 
   describe('getChangedFiles', () => {
-    it('should return changed files with line numbers', () => {
+    it('should return changed files with line numbers from relative cwd path', () => {
       const changedFiles = getChangedFiles({
         base: branch,
         cwd,
+      });
+
+      expect(changedFiles).toEqual([
+        {
+          filePath: 'index.ts',
+          changedLines: [3],
+        },
+      ]);
+    });
+
+    it('should return changed files with line numbers from absolute cwd path', () => {
+      const changedFiles = getChangedFiles({
+        base: branch,
+        cwd: absoluteCwd,
       });
 
       expect(changedFiles).toEqual([
