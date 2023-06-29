@@ -41,7 +41,7 @@ export function getMergeBase({
 
 export function getDiff({ base, cwd }: BaseGitActionArgs): string {
   try {
-    return execSync(`git diff ${base} --unified=0`, {
+    return execSync(`git diff ${base} --unified=0 --relative -- ${cwd}`, {
       maxBuffer: TEN_MEGABYTES,
       cwd,
       stdio: 'pipe',
