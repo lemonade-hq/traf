@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { resolve } from 'node:path';
 
 const TEN_MEGABYTES = 1024 * 10000;
 
@@ -41,7 +42,11 @@ export function getMergeBase({
 
 export function getDiff({ base, cwd }: BaseGitActionArgs): string {
   try {
-    return execSync(`git diff ${base} --unified=0`, {
+    const diffCommand = cwd
+      ? `git diff ${base} --unified=0 --relative -- ${resolve(cwd)}`
+      : `git diff ${base} --unified=0 `;
+
+    return execSync(diffCommand, {
       maxBuffer: TEN_MEGABYTES,
       cwd,
       stdio: 'pipe',
