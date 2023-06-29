@@ -32,6 +32,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
           token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
       - name: '🔨 Cache node modules'
@@ -96,6 +97,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
           token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
       - name: '🔨 Cache node modules'
@@ -174,6 +176,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
           token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
       - name: '🔨 Cache node modules'
@@ -248,6 +251,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
           token: ${{ env.GITHUB_FORCE_PUSH_TOKEN || github.token }}
       - name: '🔨 Cache node modules'
