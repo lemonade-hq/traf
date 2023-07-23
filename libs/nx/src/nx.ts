@@ -89,8 +89,11 @@ export async function getNxTrueAffectedProjects(
 
       if (project.projectType === 'library') {
         tsConfig = join(projectRoot, 'tsconfig.lib.json');
+      } else if (!tsConfig || !existsSync(resolve(cwd, tsConfig))) {
+        tsConfig = join(projectRoot, 'tsconfig.app.json');
       }
-      if (!tsConfig || !existsSync(resolve(cwd, tsConfig))) {
+
+      if (!existsSync(resolve(cwd, tsConfig))) {
         tsConfig = join(projectRoot, 'tsconfig.json');
       }
     }
