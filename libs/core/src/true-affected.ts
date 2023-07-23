@@ -23,6 +23,7 @@ const ignoredRootNodeTypes = [
   SyntaxKind.ExportDeclaration,
   SyntaxKind.ModuleDeclaration,
   SyntaxKind.ExpressionStatement, // iife,
+  SyntaxKind.IfStatement,
 ];
 
 export const findRootNode = (
