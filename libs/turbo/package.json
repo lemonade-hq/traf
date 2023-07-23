@@ -1,6 +1,6 @@
 {
   "name": "@traf/turbo",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "type": "commonjs",
   "license": "MIT",
   "description": "A cli tool that wraps `@traf/core` to be used with Turborepo.",
