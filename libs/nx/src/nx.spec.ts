@@ -1,7 +1,7 @@
 import { getNxProjects, getNxTrueAffectedProjects } from './nx';
 import * as globby from 'globby';
 import * as fs from 'fs';
-import { projectCwd, workspaceCwd } from './mocks';
+import { projectCwd, workspaceCwd, workspaceWithPathsCwd } from './mocks';
 
 jest.mock('globby', () => ({
   globby: jest.fn(),
@@ -27,6 +27,33 @@ describe('nx', () => {
             expect.objectContaining({
               name: 'proj2',
               project: {},
+            }),
+          ])
+        );
+      });
+    });
+
+    describe('nx workspace with a path to projects instead of configuration', () => {
+      it('should return return projects configuration using nested `project.json` files', async () => {
+        jest
+          .spyOn(globby, 'globby')
+          .mockResolvedValue(['./proj1/project.json', './proj2/project.json']);
+
+        const projects = await getNxProjects(workspaceWithPathsCwd);
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              project: {
+                name: 'proj1',
+              },
+            }),
+            expect.objectContaining({
+              name: 'proj2',
+              project: {
+                name: 'proj2',
+              },
             }),
           ])
         );
