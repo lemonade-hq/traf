@@ -1,7 +1,12 @@
 import { getNxProjects, getNxTrueAffectedProjects } from './nx';
 import * as globby from 'globby';
 import * as fs from 'fs';
-import { projectCwd, workspaceCwd, workspaceWithPathsCwd } from './mocks';
+import {
+  projectCwd,
+  workspaceCwd,
+  workspaceMixedCwd,
+  workspaceWithPathsCwd,
+} from './mocks';
 
 jest.mock('globby', () => ({
   globby: jest.fn(),
@@ -47,6 +52,61 @@ describe('nx', () => {
               name: 'proj1',
               project: {
                 name: 'proj1',
+              },
+            }),
+            expect.objectContaining({
+              name: 'proj2',
+              project: {
+                name: 'proj2',
+              },
+            }),
+          ])
+        );
+      });
+    });
+
+    describe('nx workspace with mixed configuration and paths', () => {
+      it('should return both `project.json` and `workspace.json` projects when there are no duplicates', async () => {
+        jest
+          .spyOn(globby, 'globby')
+          .mockResolvedValue(['./proj1/project.json']);
+
+        const projects = await getNxProjects(workspaceMixedCwd.noDuplicates);
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              project: {
+                name: 'proj1',
+              },
+            }),
+            expect.objectContaining({
+              name: 'proj2',
+              project: {
+                name: 'proj2',
+              },
+            }),
+          ])
+        );
+      });
+
+      it('should return configuration from `project.json` file when there is a duplicated configuration in `workspace.json` file', async () => {
+        jest
+          .spyOn(globby, 'globby')
+          .mockResolvedValue(['./proj1/project.json']);
+
+        const projects = await getNxProjects(
+          workspaceMixedCwd.duplicatedConfig
+        );
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              project: {
+                name: 'proj1',
+                sourceRoot: 'projectSourceRoot',
               },
             }),
             expect.objectContaining({

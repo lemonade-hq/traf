@@ -1,0 +1,11 @@
+{
+  "projects": {
+    "proj1": {
+      "name": "proj1",
+      "sourceRoot": "workspaceSourceRoot"
+    },
+    "proj2": {
+      "name": "proj2"
+    }
+  }
+}
