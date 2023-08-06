@@ -28,35 +28,39 @@ interface WorkspaceProject {
 }
 
 export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
-  try {
-    return await getNxProjectsFromWorkspace(cwd);
-  } catch (e) {
-    return getNxProjectsFromNestedProjects(cwd);
-  }
-}
+  const nxProjects = await getNxProjectJsonProjects(cwd);
+  const workspaceProjects = await getNxWorkspaceProjects(cwd);
 
-async function getNxProjectsFromWorkspace(
-  cwd: string
-): Promise<WorkspaceProject[]> {
-  const path = resolve(cwd, 'workspace.json');
-  const file = await readFile(path, 'utf-8');
-  const workspace = JSON.parse(file) as WorkspaceJsonConfiguration;
-
-  const allProjectsArePaths = Object.values(workspace.projects).every(
-    (proj) => typeof proj === 'string'
+  const additionalWorkspaceProjects = workspaceProjects.filter(
+    (proj) =>
+      nxProjects.find((nested) => nested.name === proj.name) === undefined
   );
 
-  if (allProjectsArePaths) {
-    return getNxProjectsFromNestedProjects(cwd);
-  }
-
-  return Object.entries(workspace.projects).map(([name, project]) => ({
-    name,
-    project: project as NxProject,
-  }));
+  nxProjects.push(...additionalWorkspaceProjects);
+  return nxProjects;
 }
 
-async function getNxProjectsFromNestedProjects(
+async function getNxWorkspaceProjects(
+  cwd: string
+): Promise<WorkspaceProject[]> {
+  try {
+    const path = resolve(cwd, 'workspace.json');
+    const file = await readFile(path, 'utf-8');
+    const workspace = JSON.parse(file) as WorkspaceJsonConfiguration;
+
+    return Object.entries(workspace.projects)
+      .filter(([_, project]) => typeof project === 'object')
+      .map(([name, project]) => ({
+        name,
+        project: project as NxProject,
+      }));
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+}
+
+async function getNxProjectJsonProjects(
   cwd: string
 ): Promise<WorkspaceProject[]> {
   try {
