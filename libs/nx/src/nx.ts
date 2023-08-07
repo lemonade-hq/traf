@@ -31,13 +31,11 @@ export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
   const nxProjects = await getNxProjectJsonProjects(cwd);
   const workspaceProjects = await getNxWorkspaceProjects(cwd);
 
-  const additionalWorkspaceProjects = workspaceProjects.filter(
-    (proj) =>
-      nxProjects.find((nested) => nested.name === proj.name) === undefined
+  const relevantWorkspaceProjects = workspaceProjects.filter(
+    (proj) => nxProjects.find((nested) => nested.name === proj.name) === null
   );
 
-  nxProjects.push(...additionalWorkspaceProjects);
-  return nxProjects;
+  return [...nxProjects, ...relevantWorkspaceProjects];
 }
 
 async function getNxWorkspaceProjects(
