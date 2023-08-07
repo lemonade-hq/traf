@@ -53,7 +53,6 @@ async function getNxWorkspaceProjects(
         project: project as NxProject,
       }));
   } catch (e) {
-    console.log(e);
     return [];
   }
 }
@@ -93,7 +92,6 @@ async function getNxProjectJsonProjects(
 
     return projectFiles;
   } catch (e) {
-    console.log(e);
     return [];
   }
 }
