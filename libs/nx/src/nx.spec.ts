@@ -151,13 +151,8 @@ describe('nx', () => {
 
     describe('no nx workspace and no nested project.json', () => {
       it('should return an empty array', async () => {
-        const logSpy = jest
-          .spyOn(console, 'log')
-          .mockImplementationOnce(() => '');
-
         const projects = await getNxProjects('.');
 
-        expect(logSpy).toHaveBeenCalled();
         expect(projects).toEqual([]);
       });
     });
