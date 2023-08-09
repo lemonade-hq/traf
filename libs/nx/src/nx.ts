@@ -19,7 +19,7 @@ interface NxProject {
 }
 
 interface WorkspaceJsonConfiguration {
-  projects: Record<string, NxProject>;
+  projects: Record<string, NxProject | string>;
 }
 
 interface WorkspaceProject {
@@ -28,51 +28,72 @@ interface WorkspaceProject {
 }
 
 export async function getNxProjects(cwd: string): Promise<WorkspaceProject[]> {
+  const nxProjects = await getNxProjectJsonProjects(cwd);
+  const workspaceProjects = await getNxWorkspaceProjects(cwd);
+
+  const relevantWorkspaceProjects = workspaceProjects.filter(
+    (proj) =>
+      nxProjects.find((nested) => nested.name === proj.name) === undefined
+  );
+
+  return [...nxProjects, ...relevantWorkspaceProjects];
+}
+
+async function getNxWorkspaceProjects(
+  cwd: string
+): Promise<WorkspaceProject[]> {
   try {
     const path = resolve(cwd, 'workspace.json');
     const file = await readFile(path, 'utf-8');
     const workspace = JSON.parse(file) as WorkspaceJsonConfiguration;
 
-    return Object.entries(workspace.projects).map(([name, project]) => ({
-      name,
-      project,
-    }));
-  } catch {
-    try {
-      const staticIgnores = ['node_modules', '**/node_modules', 'dist', '.git'];
+    return Object.entries(workspace.projects)
+      .filter(([_, project]) => typeof project === 'object')
+      .map(([name, project]) => ({
+        name,
+        project: project as NxProject,
+      }));
+  } catch (e) {
+    return [];
+  }
+}
 
-      const projectGlobPatterns: string[] = [`project.json`, `**/project.json`];
+async function getNxProjectJsonProjects(
+  cwd: string
+): Promise<WorkspaceProject[]> {
+  try {
+    const staticIgnores = ['node_modules', '**/node_modules', 'dist', '.git'];
 
-      const combinedProjectGlobPattern =
-        '{' + projectGlobPatterns.join(',') + '}';
+    const projectGlobPatterns: string[] = [`project.json`, `**/project.json`];
 
-      const files = await globby(combinedProjectGlobPattern, {
-        ignore: staticIgnores,
-        ignoreFiles: ['.nxignore'],
-        absolute: true,
-        cwd,
-        dot: true,
-        suppressErrors: true,
-        gitignore: true,
+    const combinedProjectGlobPattern =
+      '{' + projectGlobPatterns.join(',') + '}';
+
+    const files = await globby(combinedProjectGlobPattern, {
+      ignore: staticIgnores,
+      ignoreFiles: ['.nxignore'],
+      absolute: true,
+      cwd,
+      dot: true,
+      suppressErrors: true,
+      gitignore: true,
+    });
+
+    const projectFiles = [];
+
+    for (const file of files) {
+      const project = JSON.parse(
+        await readFile(resolve(cwd, file), 'utf-8')
+      ) as NxProject;
+      projectFiles.push({
+        name: project.name,
+        project,
       });
-
-      const projectFiles = [];
-
-      for (const file of files) {
-        const project = JSON.parse(
-          await readFile(resolve(cwd, file), 'utf-8')
-        ) as NxProject;
-        projectFiles.push({
-          name: project.name,
-          project,
-        });
-      }
-
-      return projectFiles;
-    } catch (e) {
-      console.log(e);
-      return [];
     }
+
+    return projectFiles;
+  } catch (e) {
+    return [];
   }
 }
 
