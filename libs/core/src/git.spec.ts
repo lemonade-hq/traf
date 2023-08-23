@@ -87,7 +87,7 @@ describe('git', () => {
     it('should return diff', () => {
       const diff = getDiff({
         base: branch,
-        cwd,
+        cwd: absoluteCwd,
       });
 
       expect(diff).toEqual(expect.any(String));
@@ -112,6 +112,35 @@ describe('git', () => {
       );
 
       spy.mockRestore();
+    });
+
+    it('should call execSync without relative if no cwd', () => {
+      const execSpy = jest.spyOn(childProcess, 'execSync');
+      (execSpy as jest.Mock).mockReturnValueOnce('diff');
+
+      getDiff({
+        base: branch,
+      });
+
+      expect(execSpy).toHaveBeenCalledWith(
+        `git diff ${branch} --unified=0 `,
+        expect.any(Object)
+      );
+    });
+
+    it('should call execSync with relative if has cwd', () => {
+      const execSpy = jest.spyOn(childProcess, 'execSync');
+      (execSpy as jest.Mock).mockReturnValueOnce('diff');
+
+      getDiff({
+        base: branch,
+        cwd,
+      });
+
+      expect(execSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`git diff ${branch} --unified=0 --relative`),
+        expect.any(Object)
+      );
     });
   });
 

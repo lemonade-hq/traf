@@ -1,22 +1,13 @@
 import { existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
-import { getChangedFiles } from './git';
-
-export interface TrueAffectedProject {
-  name: string;
-  sourceRoot: string;
-  tsConfig?: string;
-  implicitDependencies?: string[];
-}
-
-export interface TrueAffected {
-  cwd: string;
-  rootTsConfig?: string;
-  base?: string;
-  projects: TrueAffectedProject[];
-  includeFiles?: string[];
-}
+import { GetChangedFiles, getChangedFiles } from './git';
+import {
+  findNonSourceAffectedFiles,
+  findRootNode,
+  getPackageNameByPath,
+} from './utils';
+import { TrueAffected, TrueAffectedProject } from './types';
 
 const ignoredRootNodeTypes = [
   SyntaxKind.ImportDeclaration,
@@ -25,22 +16,6 @@ const ignoredRootNodeTypes = [
   SyntaxKind.ExpressionStatement, // iife,
   SyntaxKind.IfStatement,
 ];
-
-export const findRootNode = (
-  node?: Node<ts.Node>
-): Node<ts.Node> | undefined => {
-  if (node == null) return;
-  /* istanbul ignore next */
-  if (node.getParent()?.getKind() === SyntaxKind.SourceFile) return node;
-  return findRootNode(node.getParent());
-};
-
-export const getPackageNameByPath = (
-  path: string,
-  projects: TrueAffectedProject[]
-): string | undefined => {
-  return projects.find(({ sourceRoot }) => path.includes(sourceRoot))?.name;
-};
 
 export const trueAffected = async ({
   cwd,
@@ -89,9 +64,29 @@ export const trueAffected = async ({
     }
   );
 
-  const changedFiles = getChangedFiles({ base, cwd }).filter(
+  const sourceChangedFiles: GetChangedFiles[] = getChangedFiles({
+    base,
+    cwd,
+  }).filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
+
+  const ignoredPaths = ['node_modules', 'dist', '.git'];
+
+  const nonSourceChangedFiles: GetChangedFiles[] = getChangedFiles({
+    base,
+    cwd,
+  })
+    .filter(
+      ({ filePath }) =>
+        !filePath.match(/.*\.(ts|js)x?$/g) &&
+        project.getSourceFile(resolve(cwd, filePath)) == null
+    )
+    .flatMap(({ filePath: changedFilePath }) =>
+      findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths)
+    );
+
+  const changedFiles = [...sourceChangedFiles, ...nonSourceChangedFiles];
 
   const affectedPackages = new Set<string>();
   const visitedIdentifiers = new Map<string, string[]>();
@@ -132,7 +127,9 @@ export const trueAffected = async ({
   };
 
   changedFiles.forEach(({ filePath, changedLines }) => {
-    const sourceFile = project.getSourceFileOrThrow(resolve(cwd, filePath));
+    const sourceFile = project.getSourceFile(resolve(cwd, filePath));
+
+    if (sourceFile == null) return;
 
     changedLines.forEach((line) => {
       try {

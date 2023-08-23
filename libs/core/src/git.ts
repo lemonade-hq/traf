@@ -42,9 +42,10 @@ export function getMergeBase({
 
 export function getDiff({ base, cwd }: BaseGitActionArgs): string {
   try {
-    const diffCommand = cwd
-      ? `git diff ${base} --unified=0 --relative -- ${resolve(cwd)}`
-      : `git diff ${base} --unified=0 `;
+    const diffCommand =
+      cwd != null
+        ? `git diff ${base} --unified=0 --relative -- ${resolve(cwd)}`
+        : `git diff ${base} --unified=0 `;
 
     return execSync(diffCommand, {
       maxBuffer: TEN_MEGABYTES,
@@ -60,7 +61,7 @@ export function getDiff({ base, cwd }: BaseGitActionArgs): string {
   }
 }
 
-interface GetChangedFiles {
+export interface GetChangedFiles {
   filePath: string;
   changedLines: number[];
 }

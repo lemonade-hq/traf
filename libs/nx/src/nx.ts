@@ -105,12 +105,12 @@ export async function getNxTrueAffectedProjects(
   return projects.map(({ name, project }) => {
     let tsConfig = project.targets?.build?.options.tsConfig;
 
-    if (!tsConfig) {
+    if (tsConfig == null) {
       const projectRoot = join(project.sourceRoot, '..');
 
       if (project.projectType === 'library') {
         tsConfig = join(projectRoot, 'tsconfig.lib.json');
-      } else if (!tsConfig || !existsSync(resolve(cwd, tsConfig))) {
+      } else {
         tsConfig = join(projectRoot, 'tsconfig.app.json');
       }
 
