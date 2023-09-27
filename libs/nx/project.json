@@ -4,15 +4,24 @@
   "sourceRoot": "libs/nx/src",
   "projectType": "library",
   "targets": {
+    "emit-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsc --emitDeclarationOnly --declaration --outDir dist --project libs/nx/tsconfig.lib.json"
+      }
+    },
     "build": {
+      "dependsOn": ["emit-types"],
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/nx",
         "main": "libs/nx/src/cli.ts",
+        "additionalEntryPoints": ["libs/nx/src/index.ts"],
         "tsConfig": "libs/nx/tsconfig.lib.json",
         "assets": ["libs/nx/*.md", "libs/nx/bin/*"],
         "generatePackageJson": true,
+        "deleteOutputPath": false,
         "esbuildOptions": {
           "banner": {
             "js": "import { dirname as __dirname__ } from 'path';import { fileURLToPath } from 'url';import { createRequire as topLevelCreateRequire } from 'module';const require = topLevelCreateRequire(import.meta.url);const __filename = fileURLToPath(import.meta.url);const __dirname = __dirname__(__filename);"

@@ -1,7 +1,9 @@
 {
   "name": "@traf/turbo",
   "version": "0.0.11",
-  "type": "commonjs",
+  "type": "module",
+  "main": "index.js",
+  "types": "src/index.d.ts",
   "license": "MIT",
   "description": "A cli tool that wraps `@traf/core` to be used with Turborepo.",
   "repository": {
