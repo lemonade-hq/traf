@@ -5,13 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "dependsOn": ["emit-types"],
+      "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/core",
         "main": "libs/core/src/index.ts",
+        "additionalEntryPoints": ["libs/core/src/index.ts"],
         "tsConfig": "libs/core/tsconfig.lib.json",
-        "assets": ["libs/core/*.md"]
+        "assets": ["libs/core/*.md"],
+        "generatePackageJson": true,
+        "deleteOutputPath": false,
+        "esbuildOptions": {
+          "banner": {
+            "js": "import { dirname as __dirname__ } from 'path';import { fileURLToPath } from 'url';import { createRequire as topLevelCreateRequire } from 'module';const require = topLevelCreateRequire(import.meta.url);const __filename = fileURLToPath(import.meta.url);const __dirname = __dirname__(__filename);"
+          }
+        }
       }
     },
     "lint": {

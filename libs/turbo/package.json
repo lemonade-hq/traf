@@ -1,6 +1,7 @@
 {
   "name": "@traf/turbo",
   "version": "0.0.13",
+  "type": "module",
   "main": "index.js",
   "types": "src/index.d.ts",
   "license": "MIT",
@@ -24,11 +25,5 @@
   },
   "bin": {
     "traf-turbo": "bin/traf-turbo.js"
-  },
-  "exports": {
-    ".": {
-      "require": "./index.cjs",
-      "import": "./index.js"
-    }
   }
 }

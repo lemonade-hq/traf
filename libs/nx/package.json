@@ -24,11 +24,5 @@
   },
   "bin": {
     "traf-nx": "bin/traf-nx.js"
-  },
-  "exports": {
-    ".": {
-      "require": "./index.cjs",
-      "import": "./index.js"
-    }
   }
 }
