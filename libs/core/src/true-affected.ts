@@ -71,7 +71,7 @@ export const trueAffected = async ({
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
-  const ignoredPaths = ['node_modules', 'dist', '.git'];
+  const ignoredPaths = ['./node_modules', './dist', './.git'];
 
   const nonSourceChangedFiles: GetChangedFiles[] = getChangedFiles({
     base,
