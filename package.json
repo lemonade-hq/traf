@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "chalk": "^5.2.0",
+    "fast-find-in-files": "^1.0.1",
     "globby": "^13.1.4",
     "ts-morph": "^18.0.0",
     "tslib": "^2.3.0",

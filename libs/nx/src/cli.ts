@@ -62,6 +62,7 @@ export const affectedAction = async ({
         shell: true,
       });
       child.on('exit', (code) => {
+        /* istanbul ignore next */
         process.exit(code ?? 0);
       });
 
@@ -73,9 +74,9 @@ export const affectedAction = async ({
 interface AffectedOptions {
   cwd: string;
   tsConfigFilePath: string;
-  action: string;
-  all: boolean;
-  base: string;
+  action?: string;
+  all?: boolean;
+  base?: string;
   json: boolean;
   includeFiles: string[];
   restArgs: string[];
@@ -141,7 +142,10 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       base,
       json,
       includeFiles,
-      restArgs: Object.entries(rest).map(([key, value]) => `--${key}=${value}`),
+      restArgs: Object.entries(rest).map(
+        /* istanbul ignore next */
+        ([key, value]) => `--${key}=${value}`
+      ),
     });
   },
 };
@@ -155,6 +159,7 @@ export async function run(): Promise<void> {
     .strictCommands().argv;
 }
 
+/* istanbul ignore next */
 if (process.env['JEST_WORKER_ID'] == null) {
   run();
 }

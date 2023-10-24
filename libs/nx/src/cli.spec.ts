@@ -5,6 +5,10 @@ import { workspaceCwd } from './mocks';
 import { TrueAffectedProject } from '@traf/core';
 
 jest.mock('chalk', () => ({
+  hex: jest.fn().mockReturnValue(jest.fn()),
+  bgHex: jest.fn().mockReturnValue({
+    bold: jest.fn(),
+  }),
   chalk: jest.fn(),
 }));
 
@@ -29,6 +33,15 @@ async function runCommand(args: string[]) {
   process.argv = ['node', 'cli.js', ...args];
   return cli.run();
 }
+
+describe('log', () => {
+  it('should log', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation();
+    cli.log('test');
+
+    expect(logSpy).toHaveBeenCalled();
+  });
+});
 
 describe('cli', () => {
   describe('run', () => {
@@ -107,9 +120,6 @@ describe('cli', () => {
       getNxTrueAffectedProjectsSpy.mockResolvedValueOnce([]);
 
       await cli.affectedAction({
-        action: 'log',
-        all: false,
-        base: 'origin/main',
         cwd: process.cwd(),
         includeFiles: [],
         json: false,
@@ -162,6 +172,25 @@ describe('cli', () => {
       expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1');
     });
 
+    it('should run log command with json', async () => {
+      trafSpy.mockResolvedValueOnce(['proj1']);
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      await cli.affectedAction({
+        action: 'log',
+        all: false,
+        base: 'origin/main',
+        cwd: process.cwd(),
+        includeFiles: [],
+        json: true,
+        restArgs: [],
+        tsConfigFilePath: 'tsconfig.base.json',
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('["proj1"]');
+    });
+
     it('should run other commands', async () => {
       trafSpy.mockResolvedValueOnce(['proj1']);
       mockSpawn.mockReturnValue({
@@ -198,7 +227,7 @@ describe('cli', () => {
           { name: 'proj1', sourceRoot: 'mock', tsConfig: 'mock' },
           { name: 'proj2', sourceRoot: 'mock', tsConfig: 'mock' },
         ]);
-      })
+      });
 
       it('should return only affected projects when `all` is false', async () => {
         await cli.affectedAction({
@@ -227,7 +256,9 @@ describe('cli', () => {
           tsConfigFilePath: 'tsconfig.base.json',
         });
 
-        expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1\n - proj2');
+        expect(logSpy).toHaveBeenCalledWith(
+          'Affected projects:\n - proj1\n - proj2'
+        );
       });
     });
   });
