@@ -71,6 +71,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
     });
 
@@ -93,6 +94,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.json',
+        target: [],
       });
     });
   });
