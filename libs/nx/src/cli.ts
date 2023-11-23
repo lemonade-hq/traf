@@ -23,8 +23,15 @@ export const affectedAction = async ({
   restArgs,
   tsConfigFilePath,
   includeFiles,
+  target,
 }: AffectedOptions) => {
-  const projects = await getNxTrueAffectedProjects(cwd);
+  let projects = await getNxTrueAffectedProjects(cwd);
+
+  if (target.length) {
+    projects = projects.filter((project) =>
+      project.targets.some((projectTarget) => target.includes(projectTarget))
+    );
+  }
 
   const affected = all
     ? projects.map((p) => p.name)
@@ -80,6 +87,7 @@ interface AffectedOptions {
   json: boolean;
   includeFiles: string[];
   restArgs: string[];
+  target: string[];
 }
 
 const affectedCommand: CommandModule<unknown, AffectedOptions> = {
@@ -119,6 +127,14 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
         return array.flatMap((v) => v.split(','));
       },
     },
+    target: {
+      desc: 'Comma separate list of targets to filter affected projects by',
+      type: 'array',
+      coerce: (array: string[]) => {
+        return array.flatMap((v) => v.split(',')).map((v) => v.trim());
+      },
+      alias: ['t', 'targets'],
+    },
   },
   handler: async ({
     cwd,
@@ -128,6 +144,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     base,
     json,
     includeFiles,
+    target,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     $0,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -142,6 +159,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       base,
       json,
       includeFiles,
+      target,
       restArgs: Object.entries(rest).map(
         /* istanbul ignore next */
         ([key, value]) => `--${key}=${value}`

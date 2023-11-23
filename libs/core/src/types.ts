@@ -3,6 +3,7 @@ export interface TrueAffectedProject {
   sourceRoot: string;
   tsConfig?: string;
   implicitDependencies?: string[];
+  targets: string[];
 }
 
 export interface TrueAffected {
