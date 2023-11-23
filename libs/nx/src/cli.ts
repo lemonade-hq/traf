@@ -133,7 +133,6 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       coerce: (array: string[]) => {
         return array.flatMap((v) => v.split(',')).map((v) => v.trim());
       },
-      alias: ['t', 'targets'],
     },
   },
   handler: async ({
