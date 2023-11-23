@@ -28,8 +28,11 @@ export const affectedAction = async ({
   let projects = await getNxTrueAffectedProjects(cwd);
 
   if (target.length) {
-    projects = projects.filter((project) =>
-      project.targets.some((projectTarget) => target.includes(projectTarget))
+    projects = projects.filter(
+      (project) =>
+        !!project.targets?.some((projectTarget) =>
+          target.includes(projectTarget)
+        )
     );
   }
 
