@@ -133,6 +133,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     target: {
       desc: 'Comma separate list of targets to filter affected projects by',
       type: 'array',
+      default: [],
       coerce: (array: string[]) => {
         return array.flatMap((v) => v.split(',')).map((v) => v.trim());
       },
