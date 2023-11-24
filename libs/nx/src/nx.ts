@@ -48,7 +48,7 @@ async function getNxWorkspaceProjects(
     const workspace = JSON.parse(file) as WorkspaceJsonConfiguration;
 
     return Object.entries(workspace.projects)
-      .filter(([_, project]) => typeof project === 'object')
+      .filter(([, project]) => typeof project === 'object')
       .map(([name, project]) => ({
         name,
         project: project as NxProject,
