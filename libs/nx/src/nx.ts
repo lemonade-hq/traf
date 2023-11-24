@@ -124,6 +124,7 @@ export async function getNxTrueAffectedProjects(
       sourceRoot: project.sourceRoot,
       implicitDependencies: project.implicitDependencies ?? [],
       tsConfig,
+      targets: Object.keys(project.targets ?? {}),
     };
   });
 }

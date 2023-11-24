@@ -17,7 +17,7 @@ npx @traf/nx@latest affected <action> [options]
 ### **Options**
 
 | Option               | Description                                                                          | Default              |
-| -------------------- | ------------------------------------------------------------------------------------ | -------------------- |
+|----------------------|--------------------------------------------------------------------------------------| -------------------- |
 | `--cwd`              | The current working directory                                                        | `process.cwd()`      |
 | `--all`              | Outputs all available projects regardless of changes                                 | `false`              |
 | `--base`             | The base branch to compare against                                                   | `origin/main`        |
@@ -25,3 +25,4 @@ npx @traf/nx@latest affected <action> [options]
 | `--action`           | The action to perform. Can be any command                                            | `log`                |
 | `--json`             | Output the result as JSON                                                            | `false`              |
 | `--includeFiles`     | Comma separated list of glob patterns to include (relative to projects' source root) |                      |
+| `--target`           | Comma separated list of targets to filter affected projects by                       |                      |

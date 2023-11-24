@@ -71,6 +71,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
     });
 
@@ -93,6 +94,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.json',
+        target: [],
       });
     });
   });
@@ -125,6 +127,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
 
       expect(getNxTrueAffectedProjectsSpy).toBeCalledWith(process.cwd());
@@ -150,6 +153,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
 
       expect(logSpy).toHaveBeenCalledWith('No affected projects');
@@ -167,6 +171,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
 
       expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1');
@@ -186,6 +191,7 @@ describe('cli', () => {
         json: true,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
 
       expect(consoleSpy).toHaveBeenCalledWith('["proj1"]');
@@ -206,6 +212,7 @@ describe('cli', () => {
         json: false,
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
+        target: [],
       });
 
       const expectedCommand = `npx nx run-many --target=build --projects=proj1 `;
@@ -219,13 +226,50 @@ describe('cli', () => {
       );
     });
 
+    describe('`target` option', () => {
+      beforeEach(() => {
+        trafSpy.mockResolvedValueOnce(['proj1']);
+
+        getNxTrueAffectedProjectsSpy.mockResolvedValueOnce([
+          {
+            name: 'proj1',
+            sourceRoot: 'mock',
+            tsConfig: 'mock',
+            targets: ['build'],
+          },
+          {
+            name: 'proj2',
+            sourceRoot: 'mock',
+            tsConfig: 'mock',
+            targets: ['test'],
+          },
+        ]);
+      });
+
+      it('should only return projects with a build target', async () => {
+        await cli.affectedAction({
+          action: 'log',
+          all: false,
+          base: 'origin/main',
+          cwd: process.cwd(),
+          includeFiles: [],
+          json: false,
+          restArgs: [],
+          tsConfigFilePath: 'tsconfig.base.json',
+          target: ['build'],
+        });
+
+        expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1');
+      });
+    });
+
     describe('`all` option', () => {
       beforeEach(() => {
         trafSpy.mockResolvedValueOnce(['proj1']);
 
         getNxTrueAffectedProjectsSpy.mockResolvedValueOnce([
-          { name: 'proj1', sourceRoot: 'mock', tsConfig: 'mock' },
-          { name: 'proj2', sourceRoot: 'mock', tsConfig: 'mock' },
+          { name: 'proj1', sourceRoot: 'mock', tsConfig: 'mock', targets: [] },
+          { name: 'proj2', sourceRoot: 'mock', tsConfig: 'mock', targets: [] },
         ]);
       });
 
@@ -239,6 +283,7 @@ describe('cli', () => {
           json: false,
           restArgs: [],
           tsConfigFilePath: 'tsconfig.base.json',
+          target: [],
         });
 
         expect(logSpy).toHaveBeenCalledWith('Affected projects:\n - proj1');
@@ -254,6 +299,7 @@ describe('cli', () => {
           json: false,
           restArgs: [],
           tsConfigFilePath: 'tsconfig.base.json',
+          target: [],
         });
 
         expect(logSpy).toHaveBeenCalledWith(
