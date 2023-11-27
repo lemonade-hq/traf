@@ -61,7 +61,31 @@ export function getDiff({ base, cwd }: BaseGitActionArgs): string {
   }
 }
 
-export interface GetChangedFiles {
+interface FileFromRevisionArgs extends BaseGitActionArgs {
+  filePath: string;
+}
+
+export function getFileFromRevision({
+  base,
+  filePath,
+  cwd,
+}: FileFromRevisionArgs): string {
+  try {
+    return execSync(`git show ${base}:${filePath}`, {
+      maxBuffer: TEN_MEGABYTES,
+      cwd,
+      stdio: 'pipe',
+    })
+      .toString()
+      .trim();
+  } catch (e) {
+    throw new Error(
+      `Unable to get file "${filePath}" for base: "${base}". are you using the correct base?`
+    );
+  }
+}
+
+export interface ChangedFiles {
   filePath: string;
   changedLines: number[];
 }
@@ -69,7 +93,7 @@ export interface GetChangedFiles {
 export function getChangedFiles({
   base,
   cwd,
-}: BaseGitActionArgs): GetChangedFiles[] {
+}: BaseGitActionArgs): ChangedFiles[] {
   const mergeBase = getMergeBase({ base, cwd });
   const diff = getDiff({ base: mergeBase, cwd });
 
