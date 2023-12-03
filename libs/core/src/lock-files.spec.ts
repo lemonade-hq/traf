@@ -8,15 +8,17 @@ import {
   findAffectedFilesByLockfile,
 } from './lock-files';
 import { getFileFromRevision } from './git';
+import { findDirectDeps } from './find-direct-deps';
 
 jest.mock('nx/src/plugins/js/lock-file/lock-file.js', () => ({
   getLockFileName: jest.fn().mockReturnValue('yarn.lock'),
   getLockFileNodes: jest.fn(),
 }));
 jest.mock('fs');
-jest.mock('./git');
 jest.mock('nx/src/utils/package-json.js');
 jest.mock('fast-find-in-files');
+jest.mock('./git');
+jest.mock('./find-direct-deps');
 
 describe('hasLockfileChanged', () => {
   it('should return true if lockfile has changed', () => {
@@ -52,9 +54,14 @@ describe('findAffectedModules', () => {
   it('should return empty array if lockfile has not changed', () => {
     (getFileFromRevision as jest.Mock).mockReturnValueOnce('{}');
     (getLockFileNodes as jest.Mock).mockReturnValueOnce({});
-    const affectedModules = findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual([]);
+    findAffectedModules('./', 'main');
+
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining([])
+    );
   });
 
   it('should return empty array if package.json has no dependencies', () => {
@@ -63,9 +70,14 @@ describe('findAffectedModules', () => {
     });
     (getFileFromRevision as jest.Mock).mockReturnValueOnce('{}');
     (getLockFileNodes as jest.Mock).mockReturnValueOnce({});
-    const affectedModules = findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual([]);
+    findAffectedModules('./', 'main');
+
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining([])
+    );
   });
 
   it('should still work when getFileFromRevision throws (no previous version of lock file)', () => {
@@ -73,9 +85,14 @@ describe('findAffectedModules', () => {
       throw new Error();
     });
     (getLockFileNodes as jest.Mock).mockReturnValueOnce({});
-    const affectedModules = findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual([]);
+    findAffectedModules('./', 'main');
+
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining([])
+    );
   });
 
   it('should return changed modules if lockfile has not changed', () => {
@@ -92,30 +109,13 @@ describe('findAffectedModules', () => {
       }
     });
 
-    const affectedModules = findAffectedModules('./', 'main');
+    findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual(['dep']);
-  });
-
-  it('should filter out modules that are not in package.json', () => {
-    (getFileFromRevision as jest.Mock).mockReturnValueOnce('{}');
-    (getLockFileNodes as jest.Mock).mockImplementation((manager, file, key) => {
-      if (key === 'lock') {
-        return {
-          [`npm:dep`]: '1.0.0',
-          [`npm:dep2`]: '1.0.0',
-        };
-      } else {
-        return {
-          [`npm:dep`]: '2.0.0',
-          [`npm:dep2`]: '2.0.0',
-        };
-      }
-    });
-
-    const affectedModules = findAffectedModules('./', 'main');
-
-    expect(affectedModules).toEqual(['dep']);
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining(['dep'])
+    );
   });
 
   it('should support scoped packages', () => {
@@ -132,9 +132,13 @@ describe('findAffectedModules', () => {
       }
     });
 
-    const affectedModules = findAffectedModules('./', 'main');
+    findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual(['@scope/dep']);
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining(['@scope/dep'])
+    );
   });
 
   it('should support scoped packages with different versions', () => {
@@ -151,9 +155,13 @@ describe('findAffectedModules', () => {
       }
     });
 
-    const affectedModules = findAffectedModules('./', 'main');
+    findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual(['@scope/dep']);
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining(['@scope/dep'])
+    );
   });
 
   it('should return module name even if it does not start with npm:', () => {
@@ -170,9 +178,13 @@ describe('findAffectedModules', () => {
       }
     });
 
-    const affectedModules = findAffectedModules('./', 'main');
+    findAffectedModules('./', 'main');
 
-    expect(affectedModules).toEqual(['dep']);
+    expect(findDirectDeps).toHaveBeenCalledWith(
+      'npm',
+      './',
+      expect.arrayContaining(['dep'])
+    );
   });
 });
 
@@ -201,6 +213,7 @@ describe('findAffectedFilesByLockfile', () => {
         };
       }
     });
+    (findDirectDeps as jest.Mock).mockReturnValue(['@scope/dep']);
   });
 
   it('should return relevant files', () => {

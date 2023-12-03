@@ -7,8 +7,8 @@ import {
   getLockFileNodes,
 } from 'nx/src/plugins/js/lock-file/lock-file.js';
 import { detectPackageManager } from 'nx/src/utils/package-manager.js';
-import { readModulePackageJson } from 'nx/src/utils/package-json.js';
 import { ChangedFiles, getFileFromRevision } from './git';
+import { findDirectDeps } from './find-direct-deps';
 
 const packageManager = detectPackageManager();
 export const lockFileName = getLockFileName(packageManager);
@@ -31,25 +31,17 @@ export function findAffectedModules(cwd: string, base: string): string[] {
   const prevNodes = getLockFileNodes(packageManager, prevLock, 'prevLock');
   const changes = diff(prevNodes, nodes);
 
-  const pkg = readModulePackageJson(cwd).packageJson;
-  const deps = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.devDependencies || {}),
-  ];
-
   const captureModuleName = new RegExp(/npm:(@?[\w-/]+)/);
-
-  return Array.from(
+  const changedModules = Array.from(
     new Set<string>(
-      changes
-        .map(
-          ({ path }) =>
-            captureModuleName.exec(path[0].toString())?.[1] ??
-            path[0].toString()
-        )
-        .filter((module) => deps.includes(module))
+      changes.map(
+        ({ path }) =>
+          captureModuleName.exec(path[0].toString())?.[1] ?? path[0].toString()
+      )
     )
   );
+
+  return findDirectDeps(packageManager, cwd, changedModules);
 }
 
 export function hasLockfileChanged(changedFiles: ChangedFiles[]): boolean {
