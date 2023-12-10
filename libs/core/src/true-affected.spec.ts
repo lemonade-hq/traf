@@ -165,10 +165,81 @@ describe('trueAffected', () => {
     expect(affected).toEqual(['proj1', 'proj3']);
   });
 
-  it('should ignore files that are not in projects files', async () => {
+  it('should include test files by suffixes', async () => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj1/index._test_.ts',
+        changedLines: [6],
+      },
+    ]);
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      rootTsConfig: 'tsconfig.json',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+          tsConfig: 'proj1/tsconfig.json',
+        },
+        {
+          name: 'proj2',
+          sourceRoot: 'proj2/',
+          tsConfig: 'proj2/tsconfig.json',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          tsConfig: 'proj3/tsconfig.json',
+          implicitDependencies: ['proj1'],
+        },
+      ],
+      testSuffixes: ['_test_'],
+    });
+
+    expect(affected).toEqual(['proj1', 'proj3']);
+  });
+
+  it('should default test files suffixes to spec and test', async () => {
     jest.spyOn(git, 'getChangedFiles').mockReturnValue([
       {
         filePath: 'proj1/index.spec.ts',
+        changedLines: [6],
+      },
+    ]);
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      rootTsConfig: 'tsconfig.json',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+          tsConfig: 'proj1/tsconfig.json',
+        },
+        {
+          name: 'proj2',
+          sourceRoot: 'proj2/',
+          tsConfig: 'proj2/tsconfig.json',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          tsConfig: 'proj3/tsconfig.json',
+          implicitDependencies: ['proj1'],
+        },
+      ],
+    });
+
+    expect(affected).toEqual(['proj1', 'proj3']);
+  });
+
+  it('should ignore files that are not in projects files', async () => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj1/README.md',
         changedLines: [6],
       },
     ]);

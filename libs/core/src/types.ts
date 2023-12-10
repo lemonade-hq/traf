@@ -12,4 +12,5 @@ export interface TrueAffected {
   base?: string;
   projects: TrueAffectedProject[];
   includeFiles?: string[];
+  testSuffixes?: string[];
 }

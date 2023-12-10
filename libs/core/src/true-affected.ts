@@ -23,6 +23,7 @@ export const trueAffected = async ({
   base = 'origin/main',
   projects,
   includeFiles = [],
+  testSuffixes = ['spec', 'test'],
 }: TrueAffected) => {
   const project = new Project({
     compilerOptions: {
@@ -88,7 +89,14 @@ export const trueAffected = async ({
 
   const changedFiles = [...sourceChangedFiles, ...nonSourceChangedFiles];
 
-  const affectedPackages = new Set<string>();
+  const changedTestFilesPackages = changedFiles
+    .filter(({ filePath }) =>
+      new RegExp(`.*\\.(${testSuffixes.join('|')})\\.(ts|js)x?$`).test(filePath)
+    )
+    .map(({ filePath }) => getPackageNameByPath(filePath, projects))
+    .filter((v): v is string => v != null);
+
+  const affectedPackages = new Set<string>(changedTestFilesPackages);
   const visitedIdentifiers = new Map<string, string[]>();
 
   const findReferencesLibs = (node: Node<ts.Node>) => {
