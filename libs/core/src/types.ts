@@ -11,5 +11,5 @@ export interface TrueAffected {
   rootTsConfig?: string;
   base?: string;
   projects: TrueAffectedProject[];
-  includeFiles?: string[];
+  include?: (string | RegExp)[];
 }
