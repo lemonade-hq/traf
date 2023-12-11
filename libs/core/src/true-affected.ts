@@ -19,12 +19,14 @@ const ignoredRootNodeTypes = [
   SyntaxKind.IfStatement,
 ];
 
+export const DEFAULT_INCLUDE_TEST_FILES = /\.(spec|test)\.(ts|js)x?/;
+
 export const trueAffected = async ({
   cwd,
   rootTsConfig,
   base = 'origin/main',
   projects,
-  includeFiles = [],
+  include = [DEFAULT_INCLUDE_TEST_FILES],
 }: TrueAffected) => {
   const project = new Project({
     compilerOptions: {
@@ -59,10 +61,6 @@ export const trueAffected = async ({
           join(resolve(cwd, sourceRoot), '**/*.{ts,js}')
         );
       }
-
-      project.addSourceFilesAtPaths(
-        includeFiles.map((path) => `${resolve(cwd, sourceRoot)}/${path}`)
-      );
     }
   );
 
@@ -71,13 +69,13 @@ export const trueAffected = async ({
     cwd,
   });
 
-  const sourceChangedFiles: ChangedFiles[] = changedFiles.filter(
+  const sourceChangedFiles = changedFiles.filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const ignoredPaths = ['./node_modules', './dist', './.git'];
 
-  const nonSourceChangedFiles: ChangedFiles[] = changedFiles
+  const nonSourceChangedFiles = changedFiles
     .filter(
       ({ filePath }) =>
         !filePath.match(/.*\.(ts|js)x?$/g) &&
@@ -105,7 +103,18 @@ export const trueAffected = async ({
     ...changedFilesByLockfile,
   ];
 
-  const affectedPackages = new Set<string>();
+  const changedIncludedFilesPackages = changedFiles
+    .filter(({ filePath }) =>
+      include.some((file) =>
+        typeof file === 'string'
+          ? filePath.endsWith(file)
+          : filePath.match(file)
+      )
+    )
+    .map(({ filePath }) => getPackageNameByPath(filePath, projects))
+    .filter((v): v is string => v != null);
+
+  const affectedPackages = new Set<string>(changedIncludedFilesPackages);
   const visitedIdentifiers = new Map<string, string[]>();
 
   const findReferencesLibs = (node: Node<ts.Node>) => {

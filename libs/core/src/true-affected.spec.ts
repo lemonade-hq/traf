@@ -169,7 +169,7 @@ describe('trueAffected', () => {
   it('should ignore files that are not in projects files', async () => {
     jest.spyOn(git, 'getChangedFiles').mockReturnValue([
       {
-        filePath: 'proj1/index.spec.ts',
+        filePath: 'proj1/README.md',
         changedLines: [6],
       },
     ]);
@@ -340,16 +340,12 @@ describe('trueAffected', () => {
 
   it.each([
     ['regular path', ['package.json'], ['proj3']],
-    ['glob path', ['**/package.json'], ['proj3']],
-    [
-      'multiple paths',
-      ['package.json', '**/jest.config.js'],
-      ['proj2', 'proj3'],
-    ],
+    ['regexp path', [/\.spec\.ts$/], ['proj1']],
+    ['multiple paths', ['package.json', /\.spec\.ts$/], ['proj1', 'proj3']],
   ])('should include files with %s', async (title, filePatterns, expected) => {
     jest.spyOn(git, 'getChangedFiles').mockReturnValue([
       {
-        filePath: 'proj2/jest.config.js',
+        filePath: 'proj1/test.spec.ts',
         changedLines: [1],
       },
       {
@@ -379,7 +375,7 @@ describe('trueAffected', () => {
           tsConfig: 'proj3/tsconfig.json',
         },
       ],
-      includeFiles: filePatterns,
+      include: filePatterns,
     });
 
     expect(affected).toEqual(expected);

@@ -136,7 +136,7 @@ describe('cli', () => {
         rootTsConfig: 'tsconfig.base.json',
         base: 'origin/main',
         projects: [],
-        includeFiles: [],
+        include: [],
       });
     });
 
