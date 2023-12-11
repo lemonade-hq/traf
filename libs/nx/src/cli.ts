@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { CommandModule } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
-import { trueAffected } from '@traf/core';
+import { DEFAULT_INCLUDE_TEST_FILES, trueAffected } from '@traf/core';
 import { getNxTrueAffectedProjects } from './nx';
 
 const color = '#ff0083';
@@ -43,7 +43,7 @@ export const affectedAction = async ({
         rootTsConfig: tsConfigFilePath,
         base,
         projects,
-        includeFiles,
+        include: [...includeFiles, DEFAULT_INCLUDE_TEST_FILES],
       });
 
   if (json) {

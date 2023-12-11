@@ -17,13 +17,14 @@ const ignoredRootNodeTypes = [
   SyntaxKind.IfStatement,
 ];
 
+export const DEFAULT_INCLUDE_TEST_FILES = /\.(spec|test)\.(ts|js)x?/;
+
 export const trueAffected = async ({
   cwd,
   rootTsConfig,
   base = 'origin/main',
   projects,
-  includeFiles = [],
-  testSuffixes = ['spec', 'test'],
+  include = [DEFAULT_INCLUDE_TEST_FILES],
 }: TrueAffected) => {
   const project = new Project({
     compilerOptions: {
@@ -58,26 +59,21 @@ export const trueAffected = async ({
           join(resolve(cwd, sourceRoot), '**/*.{ts,js}')
         );
       }
-
-      project.addSourceFilesAtPaths(
-        includeFiles.map((path) => `${resolve(cwd, sourceRoot)}/${path}`)
-      );
     }
   );
 
-  const sourceChangedFiles: GetChangedFiles[] = getChangedFiles({
+  const changedFiles = getChangedFiles({
     base,
     cwd,
-  }).filter(
+  });
+
+  const sourceChangedFiles: GetChangedFiles[] = changedFiles.filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const ignoredPaths = ['./node_modules', './dist', './.git'];
 
-  const nonSourceChangedFiles: GetChangedFiles[] = getChangedFiles({
-    base,
-    cwd,
-  })
+  const nonSourceChangedFiles: GetChangedFiles[] = changedFiles
     .filter(
       ({ filePath }) =>
         !filePath.match(/.*\.(ts|js)x?$/g) &&
@@ -87,16 +83,23 @@ export const trueAffected = async ({
       findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths)
     );
 
-  const changedFiles = [...sourceChangedFiles, ...nonSourceChangedFiles];
+  const filteredChangedFiles = [
+    ...sourceChangedFiles,
+    ...nonSourceChangedFiles,
+  ];
 
-  const changedTestFilesPackages = changedFiles
+  const changedIncludedFilesPackages = changedFiles
     .filter(({ filePath }) =>
-      new RegExp(`.*\\.(${testSuffixes.join('|')})\\.(ts|js)x?$`).test(filePath)
+      include.some((file) =>
+        typeof file === 'string'
+          ? filePath.endsWith(file)
+          : filePath.match(file)
+      )
     )
     .map(({ filePath }) => getPackageNameByPath(filePath, projects))
     .filter((v): v is string => v != null);
 
-  const affectedPackages = new Set<string>(changedTestFilesPackages);
+  const affectedPackages = new Set<string>(changedIncludedFilesPackages);
   const visitedIdentifiers = new Map<string, string[]>();
 
   const findReferencesLibs = (node: Node<ts.Node>) => {
@@ -134,7 +137,7 @@ export const trueAffected = async ({
     });
   };
 
-  changedFiles.forEach(({ filePath, changedLines }) => {
+  filteredChangedFiles.forEach(({ filePath, changedLines }) => {
     const sourceFile = project.getSourceFile(resolve(cwd, filePath));
 
     if (sourceFile == null) return;
