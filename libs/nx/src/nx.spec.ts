@@ -235,6 +235,40 @@ describe('nx', () => {
             ])
           );
         });
+
+        it('should work even if nx build config has no options', async () => {
+          jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+            const path = pathLike.toString();
+
+            if (path.endsWith('proj1/project.json')) {
+              return Promise.resolve(
+                JSON.stringify({
+                  name: 'proj1',
+                  sourceRoot: 'proj1/src',
+                  targets: {
+                    build: {
+                      options: {},
+                    },
+                  },
+                })
+              );
+            }
+
+            return Promise.reject('File not found');
+          });
+
+          const cwd = 'libs/nx/src/__fixtures__/nx-project';
+          const projects = await getNxTrueAffectedProjects(cwd);
+
+          expect(projects).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                name: 'proj1',
+                tsConfig: expect.stringContaining('proj1/tsconfig.json'),
+              }),
+            ])
+          );
+        });
       });
 
       describe('fallback tsconfig is found', () => {

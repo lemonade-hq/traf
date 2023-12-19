@@ -103,9 +103,9 @@ export async function getNxTrueAffectedProjects(
   const projects = await getNxProjects(cwd);
 
   return projects.map(({ name, project }) => {
-    let tsConfig = project.targets?.build?.options.tsConfig;
+    let tsConfig = project.targets?.build?.options?.tsConfig;
 
-    if (tsConfig == null) {
+    if (!tsConfig) {
       const projectRoot = join(project.sourceRoot, '..');
 
       if (project.projectType === 'library') {
