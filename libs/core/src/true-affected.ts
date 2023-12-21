@@ -35,9 +35,9 @@ export const trueAffected = async ({
     ...(rootTsConfig == null
       ? {}
       : {
-          tsConfigFilePath: resolve(cwd, rootTsConfig),
-          skipAddingFilesFromTsConfig: true,
-        }),
+        tsConfigFilePath: resolve(cwd, rootTsConfig),
+        skipAddingFilesFromTsConfig: true,
+      }),
   });
 
   const implicitDeps = (
@@ -73,17 +73,26 @@ export const trueAffected = async ({
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
+  // These files declare dependencies or tasks (Nx targets) of a project and should render the project affected if changed
+  const depAndTaskDeclarationFiles = ['package.json', 'nx.json', 'project.json']
+
   const ignoredPaths = ['./node_modules', './dist', './.git'];
+
+  const affectedPackages = new Set<string>();
 
   const nonSourceChangedFiles = changedFiles
     .filter(
-      ({ filePath }) =>
-        !filePath.match(/.*\.(ts|js)x?$/g) &&
-        !filePath.endsWith(lockFileName) &&
-        project.getSourceFile(resolve(cwd, filePath)) == null
+      function({ filePath }) {
+        if (depAndTaskDeclarationFiles.includes(filePath.substring(filePath.lastIndexOf('/') + 1))) {
+          const pkg = getPackageNameByPath(resolve(cwd, filePath), projects, true);
+          if (pkg) affectedPackages.add(pkg);
+        }
+        return !filePath.match(/.*\.(ts|js)x?$/g) &&
+          !filePath.endsWith(lockFileName) &&
+          project.getSourceFile(resolve(cwd, filePath)) == null
+      }
     )
-    .flatMap(({ filePath: changedFilePath }) =>
-      findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths)
+    .flatMap(({ filePath: changedFilePath }) => findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths)
     );
 
   let changedFilesByLockfile: ChangedFiles[] = [];
@@ -114,7 +123,8 @@ export const trueAffected = async ({
     .map(({ filePath }) => getPackageNameByPath(filePath, projects))
     .filter((v): v is string => v != null);
 
-  const affectedPackages = new Set<string>(changedIncludedFilesPackages);
+  changedIncludedFilesPackages.forEach(pkg => affectedPackages.add(pkg))
+
   const visitedIdentifiers = new Map<string, string[]>();
 
   const findReferencesLibs = (node: Node<ts.Node>) => {
