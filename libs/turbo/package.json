@@ -1,6 +1,6 @@
 {
   "name": "@traf/turbo",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "type": "module",
   "main": "index.js",
   "types": "src/index.d.ts",
@@ -25,5 +25,8 @@
   },
   "bin": {
     "traf-turbo": "bin/traf-turbo.js"
+  },
+  "dependencies": {
+    "nx": "17.1.3"
   }
 }

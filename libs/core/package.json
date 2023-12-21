@@ -1,6 +1,6 @@
 {
   "name": "@traf/core",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "type": "module",
   "license": "MIT",
   "description": "Find truly affected pacakges in monorepos",
@@ -20,5 +20,8 @@
   "homepage": "https://github.com/lemonade-hq/traf#readme",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "nx": "17.1.3"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@traf/nx",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "main": "index.js",
   "types": "src/index.d.ts",
   "license": "MIT",
@@ -24,5 +24,8 @@
   },
   "bin": {
     "traf-nx": "bin/traf-nx.js"
+  },
+  "dependencies": {
+    "nx": "17.1.3"
   }
 }
