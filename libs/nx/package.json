@@ -1,6 +1,6 @@
 {
   "name": "@traf/nx",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "main": "index.js",
   "types": "src/index.d.ts",
   "license": "MIT",
