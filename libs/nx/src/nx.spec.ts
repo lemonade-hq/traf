@@ -124,7 +124,7 @@ describe('nx', () => {
       beforeEach(() => {
         jest
           .spyOn(globby, 'globby')
-          .mockResolvedValue(['./proj1/project.json', './proj2/project.json']);
+          .mockResolvedValue(['./proj1/project.json', './proj2/project.json', './proj3/project.json', './proj4/project.json']);
       });
 
       it('should return all found nx projects', async () => {
@@ -142,6 +142,31 @@ describe('nx', () => {
               name: 'proj2',
               project: {
                 name: 'proj2',
+                targets: { build: {} }
+              },
+            }),
+            expect.objectContaining({
+              name: 'proj3',
+              project: {
+                name: 'proj3',
+                targets: {
+                  build: {
+                    options: {}
+                  }
+                }
+              },
+            }),
+            expect.objectContaining({
+              name: 'proj4',
+              project: {
+                name: 'proj4',
+                targets: {
+                  build: {
+                    options: {
+                      tsConfig: 'proj4/tsconfig.json'
+                    }
+                  }
+                }
               },
             }),
           ])

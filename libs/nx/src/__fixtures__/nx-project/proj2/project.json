@@ -1,3 +1,6 @@
 {
-  "name": "proj2"
+  "name": "proj2",
+  "targets": {
+    "build": {}
+  }
 }

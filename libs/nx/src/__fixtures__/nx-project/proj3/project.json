@@ -1,0 +1,8 @@
+{
+  "name": "proj3",
+  "targets": {
+    "build": {
+      "options": {}
+    }
+  }
+}

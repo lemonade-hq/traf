@@ -1,0 +1,10 @@
+{
+  "name": "proj4",
+  "targets": {
+    "build": {
+      "options": {
+        "tsConfig": "proj4/tsconfig.json"
+      }
+    }
+  }
+}
