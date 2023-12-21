@@ -60,6 +60,8 @@ export function findDirectDeps(
   cwd: string,
   packages: string[]
 ): string[] {
+  if (packages.length === 0) return [];
+
   switch (packageManager) {
     case 'npm':
       return npmFindDirectDeps(cwd, packages);

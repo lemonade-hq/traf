@@ -215,6 +215,16 @@ describe('yarnFindDirectDeps', () => {
 describe('findDirectDeps', () => {
   const cwd = '/project';
 
+  it('should not call any packageManager findDirectDeps if list of changed packages is empty', () => {
+    const execSpy = jest.spyOn(cp, 'execSync');
+
+    findDirectDeps('pnpm', cwd, []);
+    findDirectDeps('npm', cwd, []);
+    findDirectDeps('yarn', cwd, []);
+
+    expect(execSpy).toHaveBeenCalledTimes(0);
+  });
+
   it('should call pnpmFindDirectDeps if packageManager is pnpm', () => {
     const execSpy = jest
       .spyOn(cp, 'execSync')
