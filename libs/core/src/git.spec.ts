@@ -1,4 +1,9 @@
-import { getChangedFiles, getMergeBase, getDiff } from './git';
+import {
+  getChangedFiles,
+  getMergeBase,
+  getDiff,
+  getFileFromRevision,
+} from './git';
 import { resolve } from 'path';
 import { readFile, writeFile } from 'fs/promises';
 import * as childProcess from 'node:child_process';
@@ -182,6 +187,31 @@ describe('git', () => {
       });
 
       expect(changedFiles).toEqual([]);
+    });
+  });
+
+  describe('getFileFromRevision', () => {
+    it('should return the file content from the specified revision', () => {
+      const fileContent = getFileFromRevision({
+        base: branch,
+        filePath: './index.ts',
+        cwd,
+      });
+
+      expect(fileContent).toEqual(expect.any(String));
+    });
+
+    it('should throw an error if unable to get the file content', () => {
+      const filePath = './missing.ts';
+      expect(() =>
+        getFileFromRevision({
+          base: branch,
+          filePath,
+          cwd,
+        })
+      ).toThrow(
+        `Unable to get file "${filePath}" for base: "${branch}". are you using the correct base?`
+      );
     });
   });
 });

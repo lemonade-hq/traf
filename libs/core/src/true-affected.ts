@@ -1,13 +1,15 @@
 import { existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
-import { GetChangedFiles, getChangedFiles } from './git';
-import {
-  findNonSourceAffectedFiles,
-  findRootNode,
-  getPackageNameByPath,
-} from './utils';
+import { ChangedFiles, getChangedFiles } from './git';
+import { findRootNode, getPackageNameByPath } from './utils';
 import { TrueAffected, TrueAffectedProject } from './types';
+import { findNonSourceAffectedFiles } from './assets';
+import {
+  findAffectedFilesByLockfile,
+  hasLockfileChanged,
+  lockFileName,
+} from './lock-files';
 
 const ignoredRootNodeTypes = [
   SyntaxKind.ImportDeclaration,
@@ -67,25 +69,38 @@ export const trueAffected = async ({
     cwd,
   });
 
-  const sourceChangedFiles: GetChangedFiles[] = changedFiles.filter(
+  const sourceChangedFiles = changedFiles.filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
   const ignoredPaths = ['./node_modules', './dist', './.git'];
 
-  const nonSourceChangedFiles: GetChangedFiles[] = changedFiles
+  const nonSourceChangedFiles = changedFiles
     .filter(
       ({ filePath }) =>
         !filePath.match(/.*\.(ts|js)x?$/g) &&
+        !filePath.endsWith(lockFileName) &&
         project.getSourceFile(resolve(cwd, filePath)) == null
     )
     .flatMap(({ filePath: changedFilePath }) =>
       findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths)
     );
 
+  let changedFilesByLockfile: ChangedFiles[] = [];
+  if (hasLockfileChanged(changedFiles)) {
+    changedFilesByLockfile = findAffectedFilesByLockfile(
+      cwd,
+      base,
+      ignoredPaths
+    ).filter(
+      ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
+    );
+  }
+
   const filteredChangedFiles = [
     ...sourceChangedFiles,
     ...nonSourceChangedFiles,
+    ...changedFilesByLockfile,
   ];
 
   const changedIncludedFilesPackages = changedFiles
@@ -140,6 +155,7 @@ export const trueAffected = async ({
   filteredChangedFiles.forEach(({ filePath, changedLines }) => {
     const sourceFile = project.getSourceFile(resolve(cwd, filePath));
 
+    /* istanbul ignore next */
     if (sourceFile == null) return;
 
     changedLines.forEach((line) => {
