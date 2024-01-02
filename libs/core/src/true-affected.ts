@@ -27,6 +27,7 @@ export const trueAffected = async ({
   base = 'origin/main',
   projects,
   include = [DEFAULT_INCLUDE_TEST_FILES],
+  __experimentalLockfileCheck = false,
 }: TrueAffected) => {
   const project = new Project({
     compilerOptions: {
@@ -87,7 +88,7 @@ export const trueAffected = async ({
     );
 
   let changedFilesByLockfile: ChangedFiles[] = [];
-  if (hasLockfileChanged(changedFiles)) {
+  if (__experimentalLockfileCheck && hasLockfileChanged(changedFiles)) {
     changedFilesByLockfile = findAffectedFilesByLockfile(
       cwd,
       base,

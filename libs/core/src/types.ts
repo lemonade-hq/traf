@@ -12,4 +12,7 @@ export interface TrueAffected {
   base?: string;
   projects: TrueAffectedProject[];
   include?: (string | RegExp)[];
+
+  // **experimental** - this is an experimental feature and may be removed or changed at any time
+  __experimentalLockfileCheck?: boolean;
 }

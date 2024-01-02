@@ -72,6 +72,7 @@ describe('cli', () => {
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
         target: [],
+        experimentalLockfileCheck: false,
       });
     });
 
@@ -95,6 +96,7 @@ describe('cli', () => {
         restArgs: [],
         tsConfigFilePath: 'tsconfig.json',
         target: [],
+        experimentalLockfileCheck: false,
       });
     });
   });
