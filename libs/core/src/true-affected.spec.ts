@@ -241,33 +241,59 @@ describe('trueAffected', () => {
     expect(affected).toEqual(['angular-component']);
   });
 
-  it('should find fils that are related to changed modules from lockfile', async () => {
-    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
-      {
-        filePath: 'package-lock.json',
-        changedLines: [2],
-      },
-    ]);
-    jest.spyOn(lockFiles, 'hasLockfileChanged').mockReturnValue(true);
-    jest.spyOn(lockFiles, 'findAffectedFilesByLockfile').mockReturnValue([
-      {
-        filePath: 'proj1/index.ts',
-        changedLines: [2],
-      },
-    ]);
-
-    const affected = await trueAffected({
-      cwd,
-      base: 'main',
-      projects: [
+  describe('__experimentalLockfileCheck', () => {
+    it('should find files that are related to changed modules from lockfile if flag is on', async () => {
+      jest.spyOn(git, 'getChangedFiles').mockReturnValue([
         {
-          name: 'proj1',
-          sourceRoot: 'proj1/',
+          filePath: 'package-lock.json',
+          changedLines: [2],
         },
-      ],
+      ]);
+      jest.spyOn(lockFiles, 'hasLockfileChanged').mockReturnValue(true);
+      jest.spyOn(lockFiles, 'findAffectedFilesByLockfile').mockReturnValue([
+        {
+          filePath: 'proj1/index.ts',
+          changedLines: [2],
+        },
+      ]);
+
+      const affected = await trueAffected({
+        cwd,
+        base: 'main',
+        __experimentalLockfileCheck: true,
+        projects: [
+          {
+            name: 'proj1',
+            sourceRoot: 'proj1/',
+          },
+        ],
+      });
+
+      expect(affected).toEqual(['proj1']);
     });
 
-    expect(affected).toEqual(['proj1']);
+    it('should not find files that are related to changed modules from lockfile if flag is off', async () => {
+      jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+        {
+          filePath: 'package-lock.json',
+          changedLines: [2],
+        },
+      ]);
+
+      const affected = await trueAffected({
+        cwd,
+        base: 'main',
+        __experimentalLockfileCheck: false,
+        projects: [
+          {
+            name: 'proj1',
+            sourceRoot: 'proj1/',
+          },
+        ],
+      });
+
+      expect(affected).toEqual([]);
+    });
   });
 
   it("should ignore files when can't find the changed line", async () => {

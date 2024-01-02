@@ -24,6 +24,7 @@ export const affectedAction = async ({
   tsConfigFilePath,
   includeFiles,
   target,
+  experimentalLockfileCheck,
 }: AffectedOptions) => {
   let projects = await getNxTrueAffectedProjects(cwd);
 
@@ -44,6 +45,7 @@ export const affectedAction = async ({
         base,
         projects,
         include: [...includeFiles, DEFAULT_INCLUDE_TEST_FILES],
+        __experimentalLockfileCheck: experimentalLockfileCheck,
       });
 
   if (json) {
@@ -91,6 +93,7 @@ interface AffectedOptions {
   includeFiles: string[];
   restArgs: string[];
   target: string[];
+  experimentalLockfileCheck?: boolean;
 }
 
 const affectedCommand: CommandModule<unknown, AffectedOptions> = {
@@ -138,6 +141,11 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
         return array.flatMap((v) => v.split(',')).map((v) => v.trim());
       },
     },
+    experimentalLockfileCheck: {
+      desc: 'Experimental lockfile check',
+      type: 'boolean',
+      default: false,
+    },
   },
   handler: async ({
     cwd,
@@ -148,6 +156,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     json,
     includeFiles,
     target,
+    experimentalLockfileCheck,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     $0,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -163,6 +172,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       json,
       includeFiles,
       target,
+      experimentalLockfileCheck,
       restArgs: Object.entries(rest).map(
         /* istanbul ignore next */
         ([key, value]) => `--${key}=${value}`
