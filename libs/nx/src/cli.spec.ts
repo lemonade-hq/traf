@@ -6,10 +6,13 @@ import * as nx from './nx';
 import { workspaceCwd } from './mocks';
 
 jest.mock('chalk', () => ({
-  hex: jest.fn().mockReturnValue(jest.fn()),
+  hex: () => jest.fn(),
   bgHex: jest.fn().mockReturnValue({
     bold: jest.fn(),
   }),
+  bgGray: {
+    bold: jest.fn(),
+  },
   chalk: jest.fn(),
 }));
 
@@ -134,10 +137,11 @@ describe('cli', () => {
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
         target: [],
+        verbose: true,
       });
 
       expect(getNxTrueAffectedProjectsSpy).toBeCalledWith(process.cwd(), {
-        verbose: false,
+        verbose: true,
         logger: expect.any(Object),
       });
       expect(trafSpy).toHaveBeenCalledWith({
@@ -146,7 +150,7 @@ describe('cli', () => {
         base: 'origin/main',
         projects: [],
         include: [],
-        verbose: false,
+        verbose: true,
         logger: expect.any(Object),
       });
     });

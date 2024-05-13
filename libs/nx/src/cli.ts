@@ -22,6 +22,12 @@ const getLogger = (namespace: string) => ({
         ` ${namespace} `
       )} ${message}`
     ),
+  warn: (message: string) =>
+    console.warn(
+      ` ${chalk.yellowBright('⚠️')} ${chalk.bgGray.bold(
+        ` ${namespace} `
+      )} ${chalk.yellow(message)}`
+    ),
 });
 
 export const affectedAction = async ({
@@ -41,7 +47,10 @@ export const affectedAction = async ({
   if (verbose) {
     nxLogger.log('Getting nx projects');
   }
-  let projects = await getNxTrueAffectedProjects(cwd);
+  let projects = await getNxTrueAffectedProjects(cwd, {
+    verbose,
+    logger: nxLogger,
+  });
 
   if (verbose) {
     nxLogger.log(`Found ${projects.length} projects`);

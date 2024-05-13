@@ -1,12 +1,13 @@
-import { join, resolve } from 'path';
+import { basename, dirname, join, resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { globby } from 'globby';
-import { TrueAffectedProject } from '@traf/core';
+import { TrueAffectedLogging, TrueAffectedProject } from '@traf/core';
 import { existsSync } from 'fs';
+import chalk from 'chalk';
 
 interface NxProject {
-  name: string;
-  sourceRoot: string;
+  name?: string;
+  sourceRoot?: string;
   projectType: 'application' | 'library';
   implicitDependencies?: string[];
   targets?: {
@@ -23,7 +24,8 @@ interface WorkspaceJsonConfiguration {
 }
 
 interface WorkspaceProject {
-  name: string;
+  name?: string;
+  path: string;
   project: NxProject;
 }
 
@@ -51,6 +53,7 @@ async function getNxWorkspaceProjects(
       .filter(([, project]) => typeof project === 'object')
       .map(([name, project]) => ({
         name,
+        path,
         project: project as NxProject,
       }));
   } catch (e) {
@@ -82,11 +85,11 @@ async function getNxProjectJsonProjects(
     const projectFiles = [];
 
     for (const file of files) {
-      const project = JSON.parse(
-        await readFile(resolve(cwd, file), 'utf-8')
-      ) as NxProject;
+      const path = resolve(cwd, file);
+      const project = JSON.parse(await readFile(path, 'utf-8')) as NxProject;
       projectFiles.push({
         name: project.name,
+        path,
         project,
       });
     }
@@ -97,16 +100,64 @@ async function getNxProjectJsonProjects(
   }
 }
 
+type GetNxTrueAffectedProjectsOptions = TrueAffectedLogging;
+
 export async function getNxTrueAffectedProjects(
-  cwd: string
+  cwd: string,
+  { verbose = false, logger = console }: GetNxTrueAffectedProjectsOptions = {}
 ): Promise<TrueAffectedProject[]> {
   const projects = await getNxProjects(cwd);
 
-  return projects.map(({ name, project }) => {
+  if (verbose) {
+    logger.log(`Found ${chalk.bold(projects.length)} nx projects`);
+  }
+
+  return projects.map(({ name, path, project }) => {
     let tsConfig = project.targets?.build?.options?.tsConfig;
+    const projectPathDir = dirname(path);
+    const projectName = name ?? basename(projectPathDir);
+
+    if (!name) {
+      logger.warn(
+        `Project at ${chalk.bold(
+          path
+        )} does not have a name property. Using project.json directory name ${chalk.bold(
+          projectName
+        )}.`
+      );
+    }
+
+    if (!project.sourceRoot) {
+      logger.warn(
+        `Project at ${chalk.bold(
+          path
+        )} does not have a sourceRoot property. Using project.json directory.`
+      );
+    }
 
     if (!tsConfig) {
-      const projectRoot = join(project.sourceRoot, '..');
+      if (verbose) {
+        if (project.sourceRoot) {
+          logger.log(
+            `Project at ${chalk.bold(
+              path
+            )} does not have a tsConfig property under '${chalk.bold(
+              'targets.build.options.tsConfig'
+            )}'. Trying to use '${chalk.bold('sourceRoot')}' `
+          );
+        } else {
+          logger.log(
+            `Project at ${chalk.bold(
+              path
+            )} does not have a tsConfig property under '${chalk.bold(
+              'targets.build.options.tsConfig'
+            )}'. Using project.json directory.`
+          );
+        }
+      }
+      const projectRoot = project.sourceRoot
+        ? join(project.sourceRoot, '..')
+        : projectPathDir;
 
       if (project.projectType === 'library') {
         tsConfig = join(projectRoot, 'tsconfig.lib.json');
@@ -119,9 +170,17 @@ export async function getNxTrueAffectedProjects(
       }
     }
 
+    if (verbose) {
+      logger.log(
+        `Using tsconfig at ${chalk.bold(tsConfig)} for project ${chalk.bold(
+          projectName
+        )}`
+      );
+    }
+
     return {
-      name,
-      sourceRoot: project.sourceRoot,
+      name: projectName,
+      sourceRoot: project.sourceRoot ?? projectPathDir,
       implicitDependencies: project.implicitDependencies ?? [],
       tsConfig,
       targets: Object.keys(project.targets ?? {}),
