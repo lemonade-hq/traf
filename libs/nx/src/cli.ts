@@ -14,6 +14,16 @@ export const log = (message: string) =>
     ` ${chalk.hex(color)('>')} ${chalk.bgHex(color).bold(' TRAF ')}  ${message}`
   );
 
+const getLogger = (namespace: string) => ({
+  ...console,
+  log: (message: string) =>
+    console.log(
+      ` ${chalk.hex(color)('>')} ${chalk.bgGray.bold(
+        ` ${namespace} `
+      )} ${message}`
+    ),
+});
+
 export const affectedAction = async ({
   cwd,
   action = 'log',
@@ -25,8 +35,17 @@ export const affectedAction = async ({
   includeFiles,
   target,
   experimentalLockfileCheck,
+  verbose = false,
 }: AffectedOptions) => {
+  const nxLogger = getLogger('NX');
+  if (verbose) {
+    nxLogger.log('Getting nx projects');
+  }
   let projects = await getNxTrueAffectedProjects(cwd);
+
+  if (verbose) {
+    nxLogger.log(`Found ${projects.length} projects`);
+  }
 
   if (target.length) {
     projects = projects.filter(
@@ -45,6 +64,8 @@ export const affectedAction = async ({
         base,
         projects,
         include: [...includeFiles, DEFAULT_INCLUDE_TEST_FILES],
+        verbose,
+        logger: getLogger('CORE'),
         __experimentalLockfileCheck: experimentalLockfileCheck,
       });
 
@@ -94,6 +115,7 @@ interface AffectedOptions {
   restArgs: string[];
   target: string[];
   experimentalLockfileCheck?: boolean;
+  verbose?: boolean;
 }
 
 const affectedCommand: CommandModule<unknown, AffectedOptions> = {
@@ -116,6 +138,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     all: {
       desc: 'Outputs all available projects regardless of changes',
       default: false,
+      coerce: Boolean,
     },
     base: {
       desc: 'Base branch to compare against',
@@ -124,6 +147,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     json: {
       desc: 'Output affected projects as JSON',
       default: false,
+      coerce: Boolean,
     },
     includeFiles: {
       desc: 'Comma separated list of files to include',
@@ -145,6 +169,12 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       desc: 'Experimental lockfile check',
       type: 'boolean',
       default: false,
+      coerce: Boolean,
+    },
+    verbose: {
+      desc: 'Verbose output',
+      default: false,
+      coerce: Boolean,
     },
   },
   handler: async ({
@@ -157,6 +187,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     includeFiles,
     target,
     experimentalLockfileCheck,
+    verbose,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     $0,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -173,6 +204,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       includeFiles,
       target,
       experimentalLockfileCheck,
+      verbose,
       restArgs: Object.entries(rest).map(
         /* istanbul ignore next */
         ([key, value]) => `--${key}=${value}`
