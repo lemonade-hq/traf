@@ -104,13 +104,11 @@ type GetNxTrueAffectedProjectsOptions = TrueAffectedLogging;
 
 export async function getNxTrueAffectedProjects(
   cwd: string,
-  { verbose = false, logger = console }: GetNxTrueAffectedProjectsOptions = {}
+  { logger = console }: GetNxTrueAffectedProjectsOptions = {}
 ): Promise<TrueAffectedProject[]> {
   const projects = await getNxProjects(cwd);
 
-  if (verbose) {
-    logger.log(`Found ${chalk.bold(projects.length)} nx projects`);
-  }
+  logger.debug(`Found ${chalk.bold(projects.length)} nx projects`);
 
   return projects.map(({ name, path, project }) => {
     let tsConfig = project.targets?.build?.options?.tsConfig;
@@ -136,25 +134,24 @@ export async function getNxTrueAffectedProjects(
     }
 
     if (!tsConfig) {
-      if (verbose) {
-        if (project.sourceRoot) {
-          logger.log(
-            `Project at ${chalk.bold(
-              path
-            )} does not have a tsConfig property under '${chalk.bold(
-              'targets.build.options.tsConfig'
-            )}'. Trying to use '${chalk.bold('sourceRoot')}' `
-          );
-        } else {
-          logger.log(
-            `Project at ${chalk.bold(
-              path
-            )} does not have a tsConfig property under '${chalk.bold(
-              'targets.build.options.tsConfig'
-            )}'. Using project.json directory.`
-          );
-        }
+      if (project.sourceRoot) {
+        logger.debug(
+          `Project at ${chalk.bold(
+            path
+          )} does not have a tsConfig property under '${chalk.bold(
+            'targets.build.options.tsConfig'
+          )}'. Trying to use '${chalk.bold('sourceRoot')}' `
+        );
+      } else {
+        logger.debug(
+          `Project at ${chalk.bold(
+            path
+          )} does not have a tsConfig property under '${chalk.bold(
+            'targets.build.options.tsConfig'
+          )}'. Using project.json directory.`
+        );
       }
+
       const projectRoot = project.sourceRoot
         ? join(project.sourceRoot, '..')
         : projectPathDir;
@@ -170,13 +167,11 @@ export async function getNxTrueAffectedProjects(
       }
     }
 
-    if (verbose) {
-      logger.log(
-        `Using tsconfig at ${chalk.bold(tsConfig)} for project ${chalk.bold(
-          projectName
-        )}`
-      );
-    }
+    logger.debug(
+      `Using tsconfig at ${chalk.bold(tsConfig)} for project ${chalk.bold(
+        projectName
+      )}`
+    );
 
     return {
       name: projectName,

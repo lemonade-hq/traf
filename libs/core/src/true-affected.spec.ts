@@ -219,7 +219,6 @@ describe('trueAffected', () => {
       cwd,
       base: 'main',
       rootTsConfig: 'tsconfig.json',
-      verbose: true,
       projects: [
         {
           name: 'angular-component',
@@ -268,7 +267,6 @@ describe('trueAffected', () => {
         cwd,
         base: 'main',
         __experimentalLockfileCheck: true,
-        verbose: true,
         projects: [
           {
             name: 'proj1',
@@ -410,7 +408,6 @@ describe('trueAffected', () => {
         },
       ],
       include: filePatterns,
-      verbose: true,
     });
 
     expect(affected).toEqual(expected);
@@ -425,7 +422,7 @@ describe('trueAffected', () => {
     ];
     jest.spyOn(git, 'getChangedFiles').mockReturnValue(changedFiles);
 
-    const log = jest.fn();
+    const debug = jest.fn();
     await trueAffected({
       cwd,
       base: 'main',
@@ -449,38 +446,37 @@ describe('trueAffected', () => {
         },
       ],
       logger: {
-        log,
+        debug,
       } as unknown as Console,
-      verbose: true,
     });
 
-    expect(log).toHaveBeenCalledWith('Getting affected projects');
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith('Getting affected projects');
+    expect(debug).toHaveBeenCalledWith(
       expect.stringContaining('Creating project with root tsconfig from')
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       expect.stringContaining('Adding source files for project proj1')
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       expect.stringContaining('Adding source files for project proj2')
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       expect.stringContaining(
         'Could not find a tsconfig for project proj3, adding source files paths'
       )
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       `Found ${changedFiles.length} changed files`
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       `Added package proj1 to affected packages for changed line ${changedFiles[0].changedLines[0]} in ${changedFiles[0].filePath}`
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       expect.stringMatching(
         new RegExp(`^Found identifier .* in .*${changedFiles[0].filePath}$`)
       )
     );
-    expect(log).toHaveBeenCalledWith(
+    expect(debug).toHaveBeenCalledWith(
       'Added package proj2 to affected packages'
     );
   });

@@ -490,6 +490,7 @@ describe('nx', () => {
       it('should warn about invalid project config and fallback to use project path', async () => {
         const logger = {
           warn: jest.fn(),
+          debug: jest.fn(),
         } as unknown as Console;
 
         jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
@@ -532,10 +533,11 @@ describe('nx', () => {
       });
     });
 
-    describe('verbose', () => {
+    describe('debug', () => {
       it('should log found projects', async () => {
         const logger = {
           log: jest.fn(),
+          debug: jest.fn(),
         } as unknown as Console;
 
         jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
@@ -554,15 +556,16 @@ describe('nx', () => {
         });
 
         const cwd = 'libs/nx/src/__fixtures__/nx-project';
-        await getNxTrueAffectedProjects(cwd, { verbose: true, logger });
+        await getNxTrueAffectedProjects(cwd, { logger });
 
-        expect(logger.log).toHaveBeenCalledWith('Found 1 nx projects');
+        expect(logger.debug).toHaveBeenCalledWith('Found 1 nx projects');
       });
 
       it('should notify about missing tsconfig and fallback to sourceRoot', async () => {
         const logger = {
           warn: jest.fn(),
           log: jest.fn(),
+          debug: jest.fn(),
         } as unknown as Console;
 
         jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
@@ -576,9 +579,9 @@ describe('nx', () => {
         });
 
         const cwd = 'libs/nx/src/__fixtures__/nx-project';
-        await getNxTrueAffectedProjects(cwd, { verbose: true, logger });
+        await getNxTrueAffectedProjects(cwd, { logger });
 
-        expect(logger.log).toHaveBeenCalledWith(
+        expect(logger.debug).toHaveBeenCalledWith(
           expect.stringMatching(
             new RegExp(
               "Project at .*/proj1/project.json does not have a tsConfig property under 'targets.build.options.tsConfig'. Trying to use 'sourceRoot'"
@@ -591,6 +594,7 @@ describe('nx', () => {
         const logger = {
           warn: jest.fn(),
           log: jest.fn(),
+          debug: jest.fn(),
         } as unknown as Console;
 
         jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
@@ -604,9 +608,9 @@ describe('nx', () => {
         });
 
         const cwd = 'libs/nx/src/__fixtures__/nx-project';
-        await getNxTrueAffectedProjects(cwd, { verbose: true, logger });
+        await getNxTrueAffectedProjects(cwd, { logger });
 
-        expect(logger.log).toHaveBeenCalledWith(
+        expect(logger.debug).toHaveBeenCalledWith(
           expect.stringMatching(
             new RegExp(
               "Project at .*/proj1/project.json does not have a tsConfig property under 'targets.build.options.tsConfig'. Using project.json directory."
@@ -618,6 +622,7 @@ describe('nx', () => {
       it('should notify which tsconfig is going to be used', async () => {
         const logger = {
           log: jest.fn(),
+          debug: jest.fn(),
         } as unknown as Console;
 
         jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
@@ -636,9 +641,9 @@ describe('nx', () => {
         });
 
         const cwd = 'libs/nx/src/__fixtures__/nx-project';
-        await getNxTrueAffectedProjects(cwd, { verbose: true, logger });
+        await getNxTrueAffectedProjects(cwd, { logger });
 
-        expect(logger.log).toHaveBeenCalledWith(
+        expect(logger.debug).toHaveBeenCalledWith(
           expect.stringMatching(
             new RegExp(
               `Using tsconfig at proj1/tsconfig.app.json for project proj1`

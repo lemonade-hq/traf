@@ -7,7 +7,6 @@ export interface TrueAffectedProject {
 }
 
 export interface TrueAffectedLogging {
-  verbose?: boolean;
   logger?: Console;
 }
 

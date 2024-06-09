@@ -22,25 +22,27 @@ const ignoredRootNodeTypes = [
 
 export const DEFAULT_INCLUDE_TEST_FILES = /\.(spec|test)\.(ts|js)x?/;
 
+const DEFAULT_LOGGER = {
+  ...console,
+  debug: process.env['DEBUG'] === 'true' ? console.debug : () => {},
+};
+
 export const trueAffected = async ({
   cwd,
   rootTsConfig,
   base = 'origin/main',
   projects,
   include = [DEFAULT_INCLUDE_TEST_FILES],
-  verbose = false,
-  logger = console,
+  logger = DEFAULT_LOGGER,
   __experimentalLockfileCheck = false,
 }: TrueAffected) => {
-  if (verbose) {
-    logger.log('Getting affected projects');
-    if (rootTsConfig != null) {
-      logger.log(
-        `Creating project with root tsconfig from ${chalk.bold(
-          resolve(cwd, rootTsConfig)
-        )}`
-      );
-    }
+  logger.debug('Getting affected projects');
+  if (rootTsConfig != null) {
+    logger.debug(
+      `Creating project with root tsconfig from ${chalk.bold(
+        resolve(cwd, rootTsConfig)
+      )}`
+    );
   }
 
   const project = new Project({
@@ -60,24 +62,22 @@ export const trueAffected = async ({
       const tsConfigPath = resolve(cwd, tsConfig);
 
       if (existsSync(tsConfigPath)) {
-        if (verbose) {
-          logger.log(
-            `Adding source files for project ${chalk.bold(
-              name
-            )} from tsconfig at ${chalk.bold(tsConfigPath)}`
-          );
-        }
+        logger.debug(
+          `Adding source files for project ${chalk.bold(
+            name
+          )} from tsconfig at ${chalk.bold(tsConfigPath)}`
+        );
+
         project.addSourceFilesFromTsConfig(tsConfigPath);
       } else {
-        if (verbose) {
-          logger.log(
-            `Could not find a tsconfig for project ${chalk.bold(
-              name
-            )}, adding source files paths in ${chalk.bold(
-              resolve(cwd, sourceRoot)
-            )}`
-          );
-        }
+        logger.debug(
+          `Could not find a tsconfig for project ${chalk.bold(
+            name
+          )}, adding source files paths in ${chalk.bold(
+            resolve(cwd, sourceRoot)
+          )}`
+        );
+
         project.addSourceFilesAtPaths(
           join(resolve(cwd, sourceRoot), '**/*.{ts,js}')
         );
@@ -90,9 +90,7 @@ export const trueAffected = async ({
     cwd,
   });
 
-  if (verbose) {
-    logger.log(`Found ${chalk.bold(changedFiles.length)} changed files`);
-  }
+  logger.debug(`Found ${chalk.bold(changedFiles.length)} changed files`);
 
   const sourceChangedFiles = changedFiles.filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
@@ -108,17 +106,15 @@ export const trueAffected = async ({
         project.getSourceFile(resolve(cwd, filePath)) == null
     )
     .flatMap(({ filePath: changedFilePath }) => {
-      if (verbose) {
-        logger.log(
-          `Finding non-source affected files for ${chalk.bold(changedFilePath)}`
-        );
-      }
+      logger.debug(
+        `Finding non-source affected files for ${chalk.bold(changedFilePath)}`
+      );
 
       return findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths);
     });
 
-  if (verbose && nonSourceChangedFiles.length > 0) {
-    logger.log(
+  if (nonSourceChangedFiles.length > 0) {
+    logger.debug(
       `Found ${chalk.bold(
         nonSourceChangedFiles.length
       )} non-source affected files`
@@ -127,9 +123,7 @@ export const trueAffected = async ({
 
   let changedFilesByLockfile: ChangedFiles[] = [];
   if (__experimentalLockfileCheck && hasLockfileChanged(changedFiles)) {
-    if (verbose) {
-      logger.log('Lockfile has changed, finding affected files');
-    }
+    logger.debug('Lockfile has changed, finding affected files');
 
     changedFilesByLockfile = findAffectedFilesByLockfile(
       cwd,
@@ -157,8 +151,8 @@ export const trueAffected = async ({
     .map(({ filePath }) => getPackageNameByPath(filePath, projects))
     .filter((v): v is string => v != null);
 
-  if (verbose && changedIncludedFilesPackages.length > 0) {
-    logger.log(
+  if (changedIncludedFilesPackages.length > 0) {
+    logger.debug(
       `Found ${chalk.bold(
         changedIncludedFilesPackages.length
       )} affected packages from included files`
@@ -187,33 +181,25 @@ export const trueAffected = async ({
     const identifierName = identifier.getText();
     const path = rootNode.getSourceFile().getFilePath();
 
-    if (verbose) {
-      logger.log(
-        `Found identifier ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
-      );
-    }
+    logger.debug(
+      `Found identifier ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
+    );
 
     if (identifierName && path) {
       const visited = visitedIdentifiers.get(path) ?? [];
       if (visited.includes(identifierName)) {
-        if (verbose) {
-          logger.log(
-            `Already visited ${chalk.bold(identifierName)} in ${chalk.bold(
-              path
-            )}`
-          );
-        }
+        logger.debug(
+          `Already visited ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
+        );
 
         return;
       }
 
       visitedIdentifiers.set(path, [...visited, identifierName]);
 
-      if (verbose) {
-        logger.log(
-          `Visiting ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
-        );
-      }
+      logger.debug(
+        `Visiting ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
+      );
     }
 
     refs.forEach((node) => {
@@ -222,9 +208,8 @@ export const trueAffected = async ({
 
       if (pkg) {
         affectedPackages.add(pkg);
-        if (verbose) {
-          logger.log(`Added package ${chalk.bold(pkg)} to affected packages`);
-        }
+
+        logger.debug(`Added package ${chalk.bold(pkg)} to affected packages`);
       }
 
       findReferencesLibs(node);
@@ -250,15 +235,14 @@ export const trueAffected = async ({
 
         if (pkg) {
           affectedPackages.add(pkg);
-          if (verbose) {
-            logger.log(
-              `Added package ${chalk.bold(
-                pkg
-              )} to affected packages for changed line ${chalk.bold(
-                line
-              )} in ${chalk.bold(filePath)}`
-            );
-          }
+
+          logger.debug(
+            `Added package ${chalk.bold(
+              pkg
+            )} to affected packages for changed line ${chalk.bold(
+              line
+            )} in ${chalk.bold(filePath)}`
+          );
         }
 
         findReferencesLibs(changedNode);
@@ -284,8 +268,8 @@ export const trueAffected = async ({
       .filter(([, deps]) => deps.includes(pkg))
       .map(([name]) => name);
 
-    if (verbose && deps.length > 0) {
-      logger.log(
+    if (deps.length > 0) {
+      logger.debug(
         `Adding implicit dependencies ${chalk.bold(
           deps.join(', ')
         )} to ${chalk.bold(pkg)}`

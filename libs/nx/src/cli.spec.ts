@@ -77,7 +77,6 @@ describe('cli', () => {
         tsConfigFilePath: 'tsconfig.base.json',
         target: [],
         experimentalLockfileCheck: false,
-        verbose: false,
       });
     });
 
@@ -90,7 +89,6 @@ describe('cli', () => {
         '--tsConfigFilePath=tsconfig.json',
         `--cwd=${workspaceCwd}`,
         '--includeFiles=package.json,jest.setup.js',
-        '--verbose=true',
       ]);
       expect(affectedActionSpy).toBeCalledWith({
         action: 'build',
@@ -103,7 +101,6 @@ describe('cli', () => {
         tsConfigFilePath: 'tsconfig.json',
         target: [],
         experimentalLockfileCheck: false,
-        verbose: true,
       });
     });
   });
@@ -117,7 +114,8 @@ describe('cli', () => {
     beforeEach(() => {
       getNxTrueAffectedProjectsSpy = jest
         .spyOn(nx, 'getNxTrueAffectedProjects')
-        .mockImplementation();
+        .mockImplementation()
+        .mockResolvedValue([]);
 
       logSpy = jest.spyOn(cli, 'log').mockImplementation();
     });
@@ -137,11 +135,9 @@ describe('cli', () => {
         restArgs: [],
         tsConfigFilePath: 'tsconfig.base.json',
         target: [],
-        verbose: true,
       });
 
       expect(getNxTrueAffectedProjectsSpy).toBeCalledWith(process.cwd(), {
-        verbose: true,
         logger: expect.any(Object),
       });
       expect(trafSpy).toHaveBeenCalledWith({
@@ -150,7 +146,6 @@ describe('cli', () => {
         base: 'origin/main',
         projects: [],
         include: [],
-        verbose: true,
         logger: expect.any(Object),
       });
     });
