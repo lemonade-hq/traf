@@ -14,6 +14,23 @@ export const log = (message: string) =>
     ` ${chalk.hex(color)('>')} ${chalk.bgHex(color).bold(' TRAF ')}  ${message}`
   );
 
+const getLogger = (namespace: string) => ({
+  ...console,
+  debug: (message: string) =>
+    process.env['DEBUG'] === 'true' &&
+    console.debug(
+      ` ${chalk.hex(color)('>')} ${chalk.bgGray.bold(
+        ` ${namespace} `
+      )} ${message}`
+    ),
+  warn: (message: string) =>
+    console.warn(
+      ` ${chalk.yellowBright('⚠️')} ${chalk.bgGray.bold(
+        ` ${namespace} `
+      )} ${chalk.yellow(message)}`
+    ),
+});
+
 export const affectedAction = async ({
   cwd,
   action = 'log',
@@ -26,7 +43,15 @@ export const affectedAction = async ({
   target,
   experimentalLockfileCheck,
 }: AffectedOptions) => {
-  let projects = await getNxTrueAffectedProjects(cwd);
+  const nxLogger = getLogger('NX');
+
+  nxLogger.debug('Getting nx projects');
+
+  let projects = await getNxTrueAffectedProjects(cwd, {
+    logger: nxLogger,
+  });
+
+  nxLogger.debug(`Found ${projects.length} projects`);
 
   if (target.length) {
     projects = projects.filter(
@@ -45,6 +70,7 @@ export const affectedAction = async ({
         base,
         projects,
         include: [...includeFiles, DEFAULT_INCLUDE_TEST_FILES],
+        logger: getLogger('CORE'),
         __experimentalLockfileCheck: experimentalLockfileCheck,
       });
 
@@ -116,6 +142,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     all: {
       desc: 'Outputs all available projects regardless of changes',
       default: false,
+      coerce: Boolean,
     },
     base: {
       desc: 'Base branch to compare against',
@@ -124,6 +151,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
     json: {
       desc: 'Output affected projects as JSON',
       default: false,
+      coerce: Boolean,
     },
     includeFiles: {
       desc: 'Comma separated list of files to include',
@@ -145,6 +173,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       desc: 'Experimental lockfile check',
       type: 'boolean',
       default: false,
+      coerce: Boolean,
     },
   },
   handler: async ({

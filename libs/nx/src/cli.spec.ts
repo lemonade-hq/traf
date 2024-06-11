@@ -1,14 +1,18 @@
 import { resolve } from 'path';
+import type { TrueAffectedProject } from '@traf/core';
+
 import * as cli from './cli';
 import * as nx from './nx';
 import { workspaceCwd } from './mocks';
-import { TrueAffectedProject } from '@traf/core';
 
 jest.mock('chalk', () => ({
-  hex: jest.fn().mockReturnValue(jest.fn()),
+  hex: () => jest.fn(),
   bgHex: jest.fn().mockReturnValue({
     bold: jest.fn(),
   }),
+  bgGray: {
+    bold: jest.fn(),
+  },
   chalk: jest.fn(),
 }));
 
@@ -88,7 +92,7 @@ describe('cli', () => {
       ]);
       expect(affectedActionSpy).toBeCalledWith({
         action: 'build',
-        all: 'true',
+        all: true,
         base: 'master',
         cwd: resolve(process.cwd(), workspaceCwd),
         includeFiles: ['package.json', 'jest.setup.js'],
@@ -110,7 +114,8 @@ describe('cli', () => {
     beforeEach(() => {
       getNxTrueAffectedProjectsSpy = jest
         .spyOn(nx, 'getNxTrueAffectedProjects')
-        .mockImplementation();
+        .mockImplementation()
+        .mockResolvedValue([]);
 
       logSpy = jest.spyOn(cli, 'log').mockImplementation();
     });
@@ -132,13 +137,16 @@ describe('cli', () => {
         target: [],
       });
 
-      expect(getNxTrueAffectedProjectsSpy).toBeCalledWith(process.cwd());
+      expect(getNxTrueAffectedProjectsSpy).toBeCalledWith(process.cwd(), {
+        logger: expect.any(Object),
+      });
       expect(trafSpy).toHaveBeenCalledWith({
         cwd: process.cwd(),
         rootTsConfig: 'tsconfig.base.json',
         base: 'origin/main',
         projects: [],
         include: [],
+        logger: expect.any(Object),
       });
     });
 

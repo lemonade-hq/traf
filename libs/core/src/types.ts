@@ -6,7 +6,11 @@ export interface TrueAffectedProject {
   targets?: string[];
 }
 
-export interface TrueAffected {
+export interface TrueAffectedLogging {
+  logger?: Console;
+}
+
+export interface TrueAffected extends TrueAffectedLogging {
   cwd: string;
   rootTsConfig?: string;
   base?: string;

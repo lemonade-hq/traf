@@ -1,6 +1,7 @@
 import { existsSync } from 'fs';
 import { join, resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
+import chalk from 'chalk';
 import { ChangedFiles, getChangedFiles } from './git';
 import { findRootNode, getPackageNameByPath } from './utils';
 import { TrueAffected, TrueAffectedProject } from './types';
@@ -21,14 +22,29 @@ const ignoredRootNodeTypes = [
 
 export const DEFAULT_INCLUDE_TEST_FILES = /\.(spec|test)\.(ts|js)x?/;
 
+const DEFAULT_LOGGER = {
+  ...console,
+  debug: process.env['DEBUG'] === 'true' ? console.debug : () => {},
+};
+
 export const trueAffected = async ({
   cwd,
   rootTsConfig,
   base = 'origin/main',
   projects,
   include = [DEFAULT_INCLUDE_TEST_FILES],
+  logger = DEFAULT_LOGGER,
   __experimentalLockfileCheck = false,
 }: TrueAffected) => {
+  logger.debug('Getting affected projects');
+  if (rootTsConfig != null) {
+    logger.debug(
+      `Creating project with root tsconfig from ${chalk.bold(
+        resolve(cwd, rootTsConfig)
+      )}`
+    );
+  }
+
   const project = new Project({
     compilerOptions: {
       allowJs: true,
@@ -41,23 +57,27 @@ export const trueAffected = async ({
         }),
   });
 
-  const implicitDeps = (
-    projects.filter(
-      ({ implicitDependencies = [] }) => implicitDependencies.length > 0
-    ) as Required<TrueAffectedProject>[]
-  ).reduce(
-    (acc, { name, implicitDependencies }) =>
-      acc.set(name, implicitDependencies),
-    new Map<string, string[]>()
-  );
-
   projects.forEach(
-    ({ sourceRoot, tsConfig = join(sourceRoot, 'tsconfig.json') }) => {
+    ({ name, sourceRoot, tsConfig = join(sourceRoot, 'tsconfig.json') }) => {
       const tsConfigPath = resolve(cwd, tsConfig);
 
       if (existsSync(tsConfigPath)) {
+        logger.debug(
+          `Adding source files for project ${chalk.bold(
+            name
+          )} from tsconfig at ${chalk.bold(tsConfigPath)}`
+        );
+
         project.addSourceFilesFromTsConfig(tsConfigPath);
       } else {
+        logger.debug(
+          `Could not find a tsconfig for project ${chalk.bold(
+            name
+          )}, adding source files paths in ${chalk.bold(
+            resolve(cwd, sourceRoot)
+          )}`
+        );
+
         project.addSourceFilesAtPaths(
           join(resolve(cwd, sourceRoot), '**/*.{ts,js}')
         );
@@ -70,11 +90,13 @@ export const trueAffected = async ({
     cwd,
   });
 
+  logger.debug(`Found ${chalk.bold(changedFiles.length)} changed files`);
+
   const sourceChangedFiles = changedFiles.filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
-  const ignoredPaths = ['./node_modules', './dist', './.git'];
+  const ignoredPaths = ['./node_modules', './build', './dist', './.git'];
 
   const nonSourceChangedFiles = changedFiles
     .filter(
@@ -83,12 +105,26 @@ export const trueAffected = async ({
         !filePath.endsWith(lockFileName) &&
         project.getSourceFile(resolve(cwd, filePath)) == null
     )
-    .flatMap(({ filePath: changedFilePath }) =>
-      findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths)
+    .flatMap(({ filePath: changedFilePath }) => {
+      logger.debug(
+        `Finding non-source affected files for ${chalk.bold(changedFilePath)}`
+      );
+
+      return findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths);
+    });
+
+  if (nonSourceChangedFiles.length > 0) {
+    logger.debug(
+      `Found ${chalk.bold(
+        nonSourceChangedFiles.length
+      )} non-source affected files`
     );
+  }
 
   let changedFilesByLockfile: ChangedFiles[] = [];
   if (__experimentalLockfileCheck && hasLockfileChanged(changedFiles)) {
+    logger.debug('Lockfile has changed, finding affected files');
+
     changedFilesByLockfile = findAffectedFilesByLockfile(
       cwd,
       base,
@@ -115,6 +151,14 @@ export const trueAffected = async ({
     .map(({ filePath }) => getPackageNameByPath(filePath, projects))
     .filter((v): v is string => v != null);
 
+  if (changedIncludedFilesPackages.length > 0) {
+    logger.debug(
+      `Found ${chalk.bold(
+        changedIncludedFilesPackages.length
+      )} affected packages from included files`
+    );
+  }
+
   const affectedPackages = new Set<string>(changedIncludedFilesPackages);
   const visitedIdentifiers = new Map<string, string[]>();
 
@@ -137,17 +181,36 @@ export const trueAffected = async ({
     const identifierName = identifier.getText();
     const path = rootNode.getSourceFile().getFilePath();
 
+    logger.debug(
+      `Found identifier ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
+    );
+
     if (identifierName && path) {
-      const visited = visitedIdentifiers.get(identifierName) ?? [];
-      if (visited.includes(path)) return;
-      visitedIdentifiers.set(identifierName, [...visited, path]);
+      const visited = visitedIdentifiers.get(path) ?? [];
+      if (visited.includes(identifierName)) {
+        logger.debug(
+          `Already visited ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
+        );
+
+        return;
+      }
+
+      visitedIdentifiers.set(path, [...visited, identifierName]);
+
+      logger.debug(
+        `Visiting ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
+      );
     }
 
     refs.forEach((node) => {
       const sourceFile = node.getSourceFile();
       const pkg = getPackageNameByPath(sourceFile.getFilePath(), projects);
 
-      if (pkg) affectedPackages.add(pkg);
+      if (pkg) {
+        affectedPackages.add(pkg);
+
+        logger.debug(`Added package ${chalk.bold(pkg)} to affected packages`);
+      }
 
       findReferencesLibs(node);
     });
@@ -170,7 +233,17 @@ export const trueAffected = async ({
 
         const pkg = getPackageNameByPath(sourceFile.getFilePath(), projects);
 
-        if (pkg) affectedPackages.add(pkg);
+        if (pkg) {
+          affectedPackages.add(pkg);
+
+          logger.debug(
+            `Added package ${chalk.bold(
+              pkg
+            )} to affected packages for changed line ${chalk.bold(
+              line
+            )} in ${chalk.bold(filePath)}`
+          );
+        }
 
         findReferencesLibs(changedNode);
       } catch {
@@ -179,11 +252,29 @@ export const trueAffected = async ({
     });
   });
 
+  const implicitDeps = (
+    projects.filter(
+      ({ implicitDependencies = [] }) => implicitDependencies.length > 0
+    ) as Required<TrueAffectedProject>[]
+  ).reduce(
+    (acc, { name, implicitDependencies }) =>
+      acc.set(name, implicitDependencies),
+    new Map<string, string[]>()
+  );
+
   // add implicit deps
   affectedPackages.forEach((pkg) => {
     const deps = Array.from(implicitDeps.entries())
       .filter(([, deps]) => deps.includes(pkg))
       .map(([name]) => name);
+
+    if (deps.length > 0) {
+      logger.debug(
+        `Adding implicit dependencies ${chalk.bold(
+          deps.join(', ')
+        )} to ${chalk.bold(pkg)}`
+      );
+    }
 
     deps.forEach((dep) => affectedPackages.add(dep));
   });

@@ -8,6 +8,10 @@ import {
   workspaceWithPathsCwd,
 } from './mocks';
 
+jest.mock('chalk', () => ({
+  bold: jest.fn().mockImplementation((text) => text),
+}));
+
 jest.mock('globby', () => ({
   globby: jest.fn(),
 }));
@@ -478,6 +482,173 @@ describe('nx', () => {
               implicitDependencies: [],
             }),
           ])
+        );
+      });
+    });
+
+    describe('invalid project config', () => {
+      it('should warn about invalid project config and fallback to use project path', async () => {
+        const logger = {
+          warn: jest.fn(),
+          debug: jest.fn(),
+        } as unknown as Console;
+
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(JSON.stringify({}));
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        const projects = await getNxTrueAffectedProjects(cwd, { logger });
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringMatching(
+            new RegExp(
+              `Project at .*/proj1/project.json does not have a name property. Using project.json directory name proj1.`
+            )
+          )
+        );
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringMatching(
+            new RegExp(
+              `Project at .*/proj1/project.json does not have a sourceRoot property. Using project.json directory.`
+            )
+          )
+        );
+
+        expect(projects).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              name: 'proj1',
+              sourceRoot: expect.stringContaining('proj1'),
+            }),
+          ])
+        );
+      });
+    });
+
+    describe('debug', () => {
+      it('should log found projects', async () => {
+        const logger = {
+          log: jest.fn(),
+          debug: jest.fn(),
+        } as unknown as Console;
+
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                name: 'proj1',
+                sourceRoot: 'proj1/src',
+              })
+            );
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        await getNxTrueAffectedProjects(cwd, { logger });
+
+        expect(logger.debug).toHaveBeenCalledWith('Found 1 nx projects');
+      });
+
+      it('should notify about missing tsconfig and fallback to sourceRoot', async () => {
+        const logger = {
+          warn: jest.fn(),
+          log: jest.fn(),
+          debug: jest.fn(),
+        } as unknown as Console;
+
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(JSON.stringify({ sourceRoot: 'proj1/src' }));
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        await getNxTrueAffectedProjects(cwd, { logger });
+
+        expect(logger.debug).toHaveBeenCalledWith(
+          expect.stringMatching(
+            new RegExp(
+              "Project at .*/proj1/project.json does not have a tsConfig property under 'targets.build.options.tsConfig'. Trying to use 'sourceRoot'"
+            )
+          )
+        );
+      });
+
+      it('should notify about missing tsconfig and missing sourceRoot', async () => {
+        const logger = {
+          warn: jest.fn(),
+          log: jest.fn(),
+          debug: jest.fn(),
+        } as unknown as Console;
+
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(JSON.stringify({}));
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        await getNxTrueAffectedProjects(cwd, { logger });
+
+        expect(logger.debug).toHaveBeenCalledWith(
+          expect.stringMatching(
+            new RegExp(
+              "Project at .*/proj1/project.json does not have a tsConfig property under 'targets.build.options.tsConfig'. Using project.json directory."
+            )
+          )
+        );
+      });
+
+      it('should notify which tsconfig is going to be used', async () => {
+        const logger = {
+          log: jest.fn(),
+          debug: jest.fn(),
+        } as unknown as Console;
+
+        jest.spyOn(fs.promises, 'readFile').mockImplementation((pathLike) => {
+          const path = pathLike.toString();
+
+          if (path.endsWith('proj1/project.json')) {
+            return Promise.resolve(
+              JSON.stringify({
+                name: 'proj1',
+                sourceRoot: 'proj1/src',
+              })
+            );
+          }
+
+          return Promise.reject('File not found');
+        });
+
+        const cwd = 'libs/nx/src/__fixtures__/nx-project';
+        await getNxTrueAffectedProjects(cwd, { logger });
+
+        expect(logger.debug).toHaveBeenCalledWith(
+          expect.stringMatching(
+            new RegExp(
+              `Using tsconfig at proj1/tsconfig.app.json for project proj1`
+            )
+          )
         );
       });
     });
