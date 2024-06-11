@@ -1,6 +1,6 @@
 {
   "name": "@traf/turbo",
-  "version": "0.0.22",
+  "version": "0.1.0",
   "type": "module",
   "main": "index.js",
   "types": "src/index.d.ts",
