@@ -523,7 +523,6 @@ describe('trueAffected', () => {
           tsConfig: 'proj3/tsconfig.json',
         },
       ],
-      include: filePatterns,
       compilerOptions
     });
 
