@@ -34,6 +34,7 @@ export const trueAffected = async ({
   projects,
   include = [DEFAULT_INCLUDE_TEST_FILES],
   logger = DEFAULT_LOGGER,
+  compilerOptions = {},
   __experimentalLockfileCheck = false,
 }: TrueAffected) => {
   logger.debug('Getting affected projects');
@@ -48,6 +49,7 @@ export const trueAffected = async ({
   const project = new Project({
     compilerOptions: {
       allowJs: true,
+      ...compilerOptions
     },
     ...(rootTsConfig == null
       ? {}

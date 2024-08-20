@@ -1,3 +1,5 @@
+import { CompilerOptions } from 'ts-morph';
+
 export interface TrueAffectedProject {
   name: string;
   sourceRoot: string;
@@ -16,6 +18,7 @@ export interface TrueAffected extends TrueAffectedLogging {
   base?: string;
   projects: TrueAffectedProject[];
   include?: (string | RegExp)[];
+  compilerOptions?: CompilerOptions;
 
   // **experimental** - this is an experimental feature and may be removed or changed at any time
   __experimentalLockfileCheck?: boolean;
