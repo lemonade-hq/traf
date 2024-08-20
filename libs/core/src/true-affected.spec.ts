@@ -480,4 +480,52 @@ describe('trueAffected', () => {
       'Added package proj2 to affected packages'
     );
   });
+
+  it('should support compilerOptions', async () => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'proj1/index.ts',
+        changedLines: [4],
+      },
+    ]);
+
+    const compilerOptions = {
+      paths: {
+        "@monorepo/proj1": [
+          "./proj1/index.ts"
+        ],
+        "@monorepo/proj2": [
+          "./proj2/index.ts"
+        ],
+        "@monorepo/proj3": [
+          "./proj3/index.ts"
+        ],
+      }
+    }
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+          tsConfig: 'proj1/tsconfig.json',
+        },
+        {
+          name: 'proj2',
+          sourceRoot: 'proj2/',
+          tsConfig: 'proj2/tsconfig.json',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          tsConfig: 'proj3/tsconfig.json',
+        },
+      ],
+      compilerOptions
+    });
+
+    expect(affected).toEqual(['proj1']);
+  })
 });
