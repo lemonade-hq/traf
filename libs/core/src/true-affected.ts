@@ -35,6 +35,7 @@ export const trueAffected = async ({
   include = [DEFAULT_INCLUDE_TEST_FILES],
   logger = DEFAULT_LOGGER,
   compilerOptions = {},
+  ignoredPaths = [/node_modules/, './build', './dist', './.git'],
   __experimentalLockfileCheck = false,
 }: TrueAffected) => {
   logger.debug('Getting affected projects');
@@ -97,8 +98,6 @@ export const trueAffected = async ({
   const sourceChangedFiles = changedFiles.filter(
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
-
-  const ignoredPaths = ['./node_modules', './build', './dist', './.git'];
 
   const nonSourceChangedFiles = changedFiles
     .filter(
