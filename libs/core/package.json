@@ -1,6 +1,6 @@
 {
   "name": "@traf/core",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "type": "module",
   "license": "MIT",
   "description": "Find truly affected pacakges in monorepos",
