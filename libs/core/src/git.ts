@@ -102,7 +102,7 @@ export function getChangedFiles({
     .slice(1)
     .map((file) => {
       /* istanbul ignore next */
-      const filePath = file.match(/(?<= a\/).*(?= b\/)/g)?.[0] ?? '';
+      const filePath = (file.match(/(?<=["\s]a\/).*(?=["\s]b\/)/g)?.[0] ?? '').replace('"', '').trim();
       /* istanbul ignore next */
       const changedLines =
         file.match(/(?<=@@ -.* \+)\d*(?=.* @@)/g)?.map((line) => +line) ?? [];

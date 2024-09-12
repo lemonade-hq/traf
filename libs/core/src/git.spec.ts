@@ -188,6 +188,25 @@ describe('git', () => {
 
       expect(changedFiles).toEqual([]);
     });
+
+    it('should return a changed file when it has quotes surrounding files', async () => {
+      const execSpy = jest.spyOn(childProcess, 'execSync')
+        .mockReturnValue(`diff --git "a/lala.ts" "b/lala.ts"
+new file mode 100644
+index 000000000..26b848d67
+Binary files /dev/null and "b/lala.ts" differ`);
+
+      const changedFiles = getChangedFiles({
+        base: branch,
+        cwd,
+      });
+
+      expect(changedFiles).toEqual([
+        { filePath: 'lala.ts', changedLines: [] },
+      ]);
+
+      execSpy.mockRestore();
+    });
   });
 
   describe('getFileFromRevision', () => {
