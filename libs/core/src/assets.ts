@@ -6,14 +6,16 @@ import { existsSync } from 'fs';
 export function findNonSourceAffectedFiles(
   cwd: string,
   changedFilePath: string,
-  excludeFolderPaths: string[]
+  excludeFolderPaths: (string | RegExp)[]
 ): ChangedFiles[] {
   const fileName = basename(changedFilePath);
 
   const files = fastFindInFiles({
     directory: cwd,
     needle: fileName,
-    excludeFolderPaths: excludeFolderPaths.map((path) => join(cwd, path)),
+    excludeFolderPaths: excludeFolderPaths.map((path) =>
+      typeof path === 'string' ? join(cwd, path) : path
+    ),
   });
 
   const relevantFiles = filterRelevantFiles(cwd, files, changedFilePath);
