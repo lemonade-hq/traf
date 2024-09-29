@@ -51,10 +51,12 @@ export function hasLockfileChanged(changedFiles: ChangedFiles[]): boolean {
 export function findAffectedFilesByLockfile(
   cwd: string,
   base: string,
-  excludePaths: string[]
+  excludePaths: (string | RegExp)[]
 ): ChangedFiles[] {
   const dependencies = findAffectedModules(cwd, base);
-  const excludeFolderPaths = excludePaths.map((path) => join(cwd, path));
+  const excludeFolderPaths = excludePaths.map((path) =>
+    typeof path === 'string' ? join(cwd, path) : path
+  );
 
   // fastFindInFiles supports regex but fails with `@` in the regex
   const files = dependencies.flatMap((dep) =>
