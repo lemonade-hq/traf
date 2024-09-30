@@ -99,20 +99,28 @@ export const trueAffected = async ({
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
-  const nonSourceChangedFiles = changedFiles
+  const nonSourceChangedFilesPaths = changedFiles
     .filter(
       ({ filePath }) =>
         !filePath.match(/.*\.(ts|js)x?$/g) &&
         !filePath.endsWith(lockFileName) &&
         project.getSourceFile(resolve(cwd, filePath)) == null
     )
-    .flatMap(({ filePath: changedFilePath }) => {
-      logger.debug(
-        `Finding non-source affected files for ${chalk.bold(changedFilePath)}`
-      );
+    .map(({ filePath }) => filePath);
 
-      return findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths);
-    });
+  if (nonSourceChangedFilesPaths.length > 0) {
+    logger.debug(
+      `Finding non-source affected files for ${chalk.bold(
+        nonSourceChangedFilesPaths.join(', ')
+      )}`
+    );
+  }
+
+  const nonSourceChangedFiles = findNonSourceAffectedFiles(
+    cwd,
+    nonSourceChangedFilesPaths,
+    ignoredPaths
+  );
 
   if (nonSourceChangedFiles.length > 0) {
     logger.debug(

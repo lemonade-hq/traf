@@ -5,20 +5,22 @@ import { existsSync } from 'fs';
 
 export function findNonSourceAffectedFiles(
   cwd: string,
-  changedFilePath: string,
+  changedFilePaths: string[],
   excludeFolderPaths: (string | RegExp)[]
 ): ChangedFiles[] {
-  const fileName = basename(changedFilePath);
+  if (changedFilePaths.length === 0) return [];
+
+  const fileNames = changedFilePaths.map((path) => basename(path));
 
   const files = fastFindInFiles({
     directory: cwd,
-    needle: fileName,
+    needle: new RegExp(fileNames.join('|').replaceAll('.', '\\.')),
     excludeFolderPaths: excludeFolderPaths.map((path) =>
       typeof path === 'string' ? join(cwd, path) : path
     ),
   });
 
-  const relevantFiles = filterRelevantFiles(cwd, files, changedFilePath);
+  const relevantFiles = filterRelevantFiles(cwd, files, changedFilePaths);
 
   return relevantFiles;
 }
@@ -26,21 +28,23 @@ export function findNonSourceAffectedFiles(
 function filterRelevantFiles(
   cwd: string,
   files: FastFindInFiles[],
-  changedFilePath: string
+  changedFilePaths: string[]
 ): ChangedFiles[] {
-  const fileName = basename(changedFilePath);
-  const regExp = new RegExp(`['"\`](?<relFilePath>.*${fileName})['"\`]`);
+  return changedFilePaths.flatMap((changedFilePath) => {
+    const fileName = basename(changedFilePath);
+    const regExp = new RegExp(`['"\`](?<relFilePath>.*${fileName})['"\`]`);
 
-  return files
-    .map(({ filePath: foundFilePath, queryHits }) => ({
-      filePath: relative(cwd, foundFilePath),
-      changedLines: queryHits
-        .filter(({ line }) =>
-          isRelevantLine(line, regExp, cwd, foundFilePath, changedFilePath)
-        )
-        .map(({ lineNumber }) => lineNumber),
-    }))
-    .filter(({ changedLines }) => changedLines.length > 0);
+    return files
+      .map(({ filePath: foundFilePath, queryHits }) => ({
+        filePath: relative(cwd, foundFilePath),
+        changedLines: queryHits
+          .filter(({ line }) =>
+            isRelevantLine(line, regExp, cwd, foundFilePath, changedFilePath)
+          )
+          .map(({ lineNumber }) => lineNumber),
+      }))
+      .filter(({ changedLines }) => changedLines.length > 0);
+  });
 }
 
 function isRelevantLine(
