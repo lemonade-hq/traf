@@ -99,27 +99,37 @@ export const trueAffected = async ({
     ({ filePath }) => project.getSourceFile(resolve(cwd, filePath)) != null
   );
 
-  const nonSourceChangedFiles = changedFiles
+  const nonSourceChangedFilesPaths = changedFiles
     .filter(
       ({ filePath }) =>
         !filePath.match(/.*\.(ts|js)x?$/g) &&
         !filePath.endsWith(lockFileName) &&
         project.getSourceFile(resolve(cwd, filePath)) == null
     )
-    .flatMap(({ filePath: changedFilePath }) => {
-      logger.debug(
-        `Finding non-source affected files for ${chalk.bold(changedFilePath)}`
-      );
+    .map(({ filePath }) => filePath);
 
-      return findNonSourceAffectedFiles(cwd, changedFilePath, ignoredPaths);
-    });
+  let nonSourceChangedFiles: ChangedFiles[] = [];
 
-  if (nonSourceChangedFiles.length > 0) {
+  if (nonSourceChangedFilesPaths.length > 0) {
     logger.debug(
-      `Found ${chalk.bold(
-        nonSourceChangedFiles.length
-      )} non-source affected files`
+      `Finding non-source affected files for ${chalk.bold(
+        nonSourceChangedFilesPaths.join(', ')
+      )}`
     );
+
+    nonSourceChangedFiles = findNonSourceAffectedFiles(
+      cwd,
+      nonSourceChangedFilesPaths,
+      ignoredPaths
+    );
+
+    if (nonSourceChangedFiles.length > 0) {
+      logger.debug(
+        `Found ${chalk.bold(
+          nonSourceChangedFiles.length
+        )} non-source affected files`
+      );
+    }
   }
 
   let changedFilesByLockfile: ChangedFiles[] = [];
