@@ -108,26 +108,28 @@ export const trueAffected = async ({
     )
     .map(({ filePath }) => filePath);
 
+  let nonSourceChangedFiles: ChangedFiles[] = [];
+
   if (nonSourceChangedFilesPaths.length > 0) {
     logger.debug(
       `Finding non-source affected files for ${chalk.bold(
         nonSourceChangedFilesPaths.join(', ')
       )}`
     );
-  }
 
-  const nonSourceChangedFiles = findNonSourceAffectedFiles(
-    cwd,
-    nonSourceChangedFilesPaths,
-    ignoredPaths
-  );
-
-  if (nonSourceChangedFiles.length > 0) {
-    logger.debug(
-      `Found ${chalk.bold(
-        nonSourceChangedFiles.length
-      )} non-source affected files`
+    nonSourceChangedFiles = findNonSourceAffectedFiles(
+      cwd,
+      nonSourceChangedFilesPaths,
+      ignoredPaths
     );
+
+    if (nonSourceChangedFiles.length > 0) {
+      logger.debug(
+        `Found ${chalk.bold(
+          nonSourceChangedFiles.length
+        )} non-source affected files`
+      );
+    }
   }
 
   let changedFilesByLockfile: ChangedFiles[] = [];
