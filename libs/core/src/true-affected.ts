@@ -35,7 +35,7 @@ export const trueAffected = async ({
   include = [DEFAULT_INCLUDE_TEST_FILES],
   logger = DEFAULT_LOGGER,
   compilerOptions = {},
-  ignoredPaths = [/node_modules/, './build', './dist', './.git'],
+  ignoredPaths = ['./node_modules', './dist', './build', './.git'],
   __experimentalLockfileCheck = false,
 }: TrueAffected) => {
   logger.debug('Getting affected projects');
@@ -50,7 +50,7 @@ export const trueAffected = async ({
   const project = new Project({
     compilerOptions: {
       allowJs: true,
-      ...compilerOptions
+      ...compilerOptions,
     },
     ...(rootTsConfig == null
       ? {}
