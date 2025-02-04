@@ -247,6 +247,46 @@ describe('trueAffected', () => {
     expect(affected).toEqual(['angular-component']);
   });
 
+  it('should find files and usages that are related to changed files which are not in projects files', async () => {
+    jest.spyOn(git, 'getChangedFiles').mockReturnValue([
+      {
+        filePath: 'non-source-proj/data.json',
+        changedLines: [0],
+      },
+    ]);
+
+    const affected = await trueAffected({
+      cwd,
+      base: 'main',
+      rootTsConfig: 'tsconfig.json',
+      projects: [
+        {
+          name: 'proj1',
+          sourceRoot: 'proj1/',
+          tsConfig: 'proj1/tsconfig.json',
+        },
+        {
+          name: 'proj2',
+          sourceRoot: 'proj2/',
+          tsConfig: 'proj2/tsconfig.json',
+        },
+        {
+          name: 'proj3',
+          sourceRoot: 'proj3/',
+          tsConfig: 'proj3/tsconfig.json',
+          implicitDependencies: ['proj1'],
+        },
+        {
+          name: 'non-source-proj',
+          sourceRoot: 'non-source-proj/',
+          tsConfig: 'non-source-proj/tsconfig.json',
+        },
+      ],
+    });
+
+    expect(affected).toEqual(['non-source-proj', 'proj3']);
+  });
+
   describe('__experimentalLockfileCheck', () => {
     it('should find files that are related to changed modules from lockfile if flag is on', async () => {
       jest.spyOn(git, 'getChangedFiles').mockReturnValue([
@@ -491,17 +531,11 @@ describe('trueAffected', () => {
 
     const compilerOptions = {
       paths: {
-        "@monorepo/proj1": [
-          "./proj1/index.ts"
-        ],
-        "@monorepo/proj2": [
-          "./proj2/index.ts"
-        ],
-        "@monorepo/proj3": [
-          "./proj3/index.ts"
-        ],
-      }
-    }
+        '@monorepo/proj1': ['./proj1/index.ts'],
+        '@monorepo/proj2': ['./proj2/index.ts'],
+        '@monorepo/proj3': ['./proj3/index.ts'],
+      },
+    };
 
     const affected = await trueAffected({
       cwd,
@@ -523,9 +557,9 @@ describe('trueAffected', () => {
           tsConfig: 'proj3/tsconfig.json',
         },
       ],
-      compilerOptions
+      compilerOptions,
     });
 
     expect(affected).toEqual(['proj1']);
-  })
+  });
 });
