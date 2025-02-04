@@ -136,7 +136,10 @@ export const trueAffected = async ({
 
       nonSourceChangedFiles = nonSourceChangedFiles.flatMap(
         ({ filePath, changedLines }) => {
-          const file = project.getSourceFileOrThrow(resolve(cwd, filePath));
+          const file = project.getSourceFile(resolve(cwd, filePath));
+          /* istanbul ignore next */
+          if (file == null) return [];
+
           return changedLines.reduce(
             (acc, line) => {
               const changedNode = findNodeAtLine(file, line);
