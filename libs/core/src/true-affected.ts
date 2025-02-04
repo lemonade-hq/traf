@@ -3,7 +3,7 @@ import { join, resolve } from 'path';
 import { Project, Node, ts, SyntaxKind } from 'ts-morph';
 import chalk from 'chalk';
 import { ChangedFiles, getChangedFiles } from './git';
-import { findRootNode, getPackageNameByPath } from './utils';
+import { findNodeAtLine, findRootNode, getPackageNameByPath } from './utils';
 import { TrueAffected, TrueAffectedProject } from './types';
 import { findNonSourceAffectedFiles } from './assets';
 import {
@@ -129,6 +129,72 @@ export const trueAffected = async ({
           nonSourceChangedFiles.length
         )} non-source affected files`
       );
+
+      logger.debug(
+        'Mapping non-source affected files imports to actual references'
+      );
+
+      nonSourceChangedFiles = nonSourceChangedFiles.flatMap(
+        ({ filePath, changedLines }) => {
+          const file = project.getSourceFileOrThrow(resolve(cwd, filePath));
+          return changedLines.reduce(
+            (acc, line) => {
+              const changedNode = findNodeAtLine(file, line);
+              const rootNode = findRootNode(changedNode);
+              /* istanbul ignore next */
+              if (!rootNode) return acc;
+
+              if (!rootNode.isKind(SyntaxKind.ImportDeclaration)) {
+                return {
+                  ...acc,
+                  changedLines: [...acc.changedLines, ...changedLines],
+                };
+              }
+
+              logger.debug(
+                `Found changed node ${chalk.bold(
+                  rootNode?.getText() ?? 'undefined'
+                )} at line ${chalk.bold(line)} in ${chalk.bold(filePath)}`
+              );
+
+              const identifier =
+                rootNode.getFirstChildByKind(SyntaxKind.Identifier) ??
+                rootNode.getFirstDescendantByKind(SyntaxKind.Identifier);
+
+              /* istanbul ignore next */
+              if (identifier == null) return acc;
+
+              logger.debug(
+                `Found identifier ${chalk.bold(
+                  identifier.getText()
+                )} in ${chalk.bold(filePath)}`
+              );
+
+              const refs = identifier.findReferencesAsNodes();
+
+              logger.debug(
+                `Found ${chalk.bold(
+                  refs.length
+                )} references for identifier ${chalk.bold(
+                  identifier.getText()
+                )}`
+              );
+
+              return {
+                ...acc,
+                changedLines: [
+                  ...acc.changedLines,
+                  ...refs.map((node) => node.getStartLineNumber()),
+                ],
+              };
+            },
+            {
+              filePath,
+              changedLines: [],
+            } as ChangedFiles
+          );
+        }
+      );
     }
   }
 
@@ -177,9 +243,21 @@ export const trueAffected = async ({
     const rootNode = findRootNode(node);
 
     /* istanbul ignore next */
-    if (rootNode == null) return;
+    if (rootNode == null) {
+      logger.debug(
+        `Could not find root node for ${chalk.bold(node.getText())}`
+      );
+      return;
+    }
 
-    if (ignoredRootNodeTypes.find((type) => rootNode.isKind(type))) return;
+    if (ignoredRootNodeTypes.find((type) => rootNode.isKind(type))) {
+      logger.debug(
+        `Ignoring root node ${chalk.bold(
+          rootNode.getText()
+        )} of type ${chalk.bold(rootNode.getKindName())}`
+      );
+      return;
+    }
 
     const identifier =
       rootNode.getFirstChildByKind(SyntaxKind.Identifier) ??
@@ -235,9 +313,7 @@ export const trueAffected = async ({
 
     changedLines.forEach((line) => {
       try {
-        const lineStartPos =
-          sourceFile.compilerNode.getPositionOfLineAndCharacter(line - 1, 0);
-        const changedNode = sourceFile.getDescendantAtPos(lineStartPos);
+        const changedNode = findNodeAtLine(sourceFile, line);
 
         /* istanbul ignore next */
         if (!changedNode) return;

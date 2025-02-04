@@ -1,4 +1,4 @@
-import { findRootNode, getPackageNameByPath } from './utils';
+import { findRootNode, getPackageNameByPath, findNodeAtLine } from './utils';
 import { Project, SyntaxKind } from 'ts-morph';
 
 describe('findRootNode', () => {
@@ -50,5 +50,25 @@ describe('getPackageNameByPath', () => {
     ]);
 
     expect(packageName).toBeUndefined();
+  });
+});
+
+describe('findNodeAtLine', () => {
+  it('should find the node at line', () => {
+    const project = new Project({ useInMemoryFileSystem: true });
+
+    const file = project.createSourceFile(
+      'file.ts',
+      `import { bar } from 'bar';
+      export const foo = 1;`
+    );
+
+    const importNode = findNodeAtLine(file, 1);
+
+    expect(importNode?.getKind()).toEqual(SyntaxKind.ImportKeyword);
+
+    const exportNode = findNodeAtLine(file, 2);
+
+    expect(exportNode?.getKind()).toEqual(SyntaxKind.ExportKeyword);
   });
 });

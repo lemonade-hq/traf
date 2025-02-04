@@ -1,4 +1,4 @@
-import { ts, SyntaxKind, Node } from 'ts-morph';
+import { ts, SyntaxKind, Node, SourceFile } from 'ts-morph';
 import { TrueAffectedProject } from './types';
 
 export const findRootNode = (
@@ -15,4 +15,15 @@ export const getPackageNameByPath = (
   projects: TrueAffectedProject[]
 ): string | undefined => {
   return projects.find(({ sourceRoot }) => path.includes(sourceRoot))?.name;
+};
+
+export const findNodeAtLine = (
+  sourceFile: SourceFile,
+  line: number
+): Node<ts.Node> | undefined => {
+  const lineStartPos = sourceFile.compilerNode.getPositionOfLineAndCharacter(
+    line - 1,
+    0
+  );
+  return sourceFile.getDescendantAtPos(lineStartPos);
 };

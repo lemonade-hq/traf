@@ -24,6 +24,9 @@
       "@monorepo/proj3": [
         "./proj3/index.ts"
       ],
+      "@monorepo/non-source-proj": [
+        "./non-source-proj/index.ts"
+      ]
     }
   },
 }
