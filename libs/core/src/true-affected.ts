@@ -240,7 +240,7 @@ export const trueAffected = async ({
   }
 
   const affectedPackages = new Set<string>(changedIncludedFilesPackages);
-  const visitedIdentifiers = new Map<string, string[]>();
+  const visitedIdentifiers = new Map<string, Set<string>>();
 
   const findReferencesLibs = (node: Node<ts.Node>) => {
     const rootNode = findRootNode(node);
@@ -269,7 +269,6 @@ export const trueAffected = async ({
     /* istanbul ignore next */
     if (identifier == null) return;
 
-    const refs = identifier.findReferencesAsNodes();
     const identifierName = identifier.getText();
     const path = rootNode.getSourceFile().getFilePath();
 
@@ -278,8 +277,11 @@ export const trueAffected = async ({
     );
 
     if (identifierName && path) {
-      const visited = visitedIdentifiers.get(path) ?? [];
-      if (visited.includes(identifierName)) {
+      if (!visitedIdentifiers.has(path)) {
+        visitedIdentifiers.set(path, new Set());
+      }
+      const visited = visitedIdentifiers.get(path)!;
+      if (visited.has(identifierName)) {
         logger.debug(
           `Already visited ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
         );
@@ -287,12 +289,14 @@ export const trueAffected = async ({
         return;
       }
 
-      visitedIdentifiers.set(path, [...visited, identifierName]);
+      visited.add(identifierName);
 
       logger.debug(
         `Visiting ${chalk.bold(identifierName)} in ${chalk.bold(path)}`
       );
     }
+
+    const refs = identifier.findReferencesAsNodes();
 
     refs.forEach((node) => {
       const sourceFile = node.getSourceFile();
