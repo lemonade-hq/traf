@@ -459,6 +459,10 @@ describe('trueAffected', () => {
         filePath: 'proj1/index.ts',
         changedLines: [2],
       },
+      {
+        filePath: 'proj2/index.ts',
+        changedLines: [6],
+      },
     ];
     jest.spyOn(git, 'getChangedFiles').mockReturnValue(changedFiles);
 
@@ -512,10 +516,26 @@ describe('trueAffected', () => {
       `Added package proj1 to affected packages for changed line ${changedFiles[0].changedLines[0]} in ${changedFiles[0].filePath}`
     );
     expect(debug).toHaveBeenCalledWith(
-      expect.stringMatching(
-        new RegExp(`^Found identifier .* in .*${changedFiles[0].filePath}$`)
-      )
+      `Added package proj2 to affected packages for changed line ${changedFiles[1].changedLines[0]} in ${changedFiles[1].filePath}`
     );
+
+    const project1VisitingLogs = debug.mock.calls.filter(
+      ([arg]) => expect.stringMatching(
+        new RegExp(`^Visiting .* in .*${changedFiles[0].filePath}$`)
+      ).asymmetricMatch(arg)
+    );
+
+    expect(project1VisitingLogs).toHaveLength(1);
+
+    const project2VisitingLogs = debug.mock.calls.filter(
+      ([arg]) => expect.stringMatching(
+        new RegExp(`^Visiting .* in .*${changedFiles[1].filePath}$`)
+      ).asymmetricMatch(arg)
+    );
+    // would have duplicates if visited multiple times
+    const uniqueProject2VisitingLogs = new Set(project2VisitingLogs.map(([arg]) => arg));
+    expect(uniqueProject2VisitingLogs.size).toBe(project2VisitingLogs.length);
+
     expect(debug).toHaveBeenCalledWith(
       'Added package proj2 to affected packages'
     );
