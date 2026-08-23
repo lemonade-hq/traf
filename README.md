@@ -125,3 +125,4 @@ npx @traf/turbo@latest affected <action> [options]
 | `--action`           | The action to perform. Can be any command                                            | `log`                |
 | `--json`             | Output the result as JSON                                                            | `false`              |
 
+test
