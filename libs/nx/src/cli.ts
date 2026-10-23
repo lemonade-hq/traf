@@ -162,7 +162,7 @@ const affectedCommand: CommandModule<unknown, AffectedOptions> = {
       },
     },
     target: {
-      desc: 'Comma separate list of targets to filter affected projects by',
+      desc: 'Comma separated list of targets to filter affected projects by',
       type: 'array',
       default: [],
       coerce: (array: string[]) => {
